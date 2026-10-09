@@ -620,6 +620,54 @@ describe('reduced motion re-measure', () => {
   });
 });
 
+describe('re-measure keeps the rendered groups', () => {
+  const rectOf = (width: number) =>
+    ({ x: 0, y: 0, top: 0, left: 0, right: width, bottom: 40, width, height: 40, toJSON() {} }) as DOMRect;
+
+  it('a re-measure with the same repeat count keeps the group nodes and still updates the lap', async () => {
+    const listeners: (() => void)[] = [];
+    vi.stubGlobal('matchMedia', () => ({
+      matches: false,
+      media: '(prefers-reduced-motion: reduce)',
+      addEventListener(_type: string, fn: () => void) {
+        listeners.push(fn);
+      },
+      removeEventListener() {},
+    }));
+    // A 300px bar with 290px groups does not fit, so two groups are rendered.
+    let groupWidth = 290;
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300);
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(() => rectOf(groupWidth));
+    stubControls();
+    const s = make({ textArray: ['Hi'], textSpeed: 60 });
+    const groups = groupsOf(s, 0);
+    const lap = trackOf(s).style.animationDuration;
+    expect(groups).toHaveLength(2);
+
+    // The group shrinks to 280px: still two groups, so the nodes stay and only the lap changes.
+    groupWidth = 280;
+    listeners.forEach((fn) => fn());
+    await new Promise((done) => setTimeout(done, 50));
+    expect(trackOf(s).style.animationDuration).not.toBe(lap);
+    const after = groupsOf(s, 0);
+    expect(after).toHaveLength(2);
+    expect(after[0]).toBe(groups[0]);
+    expect(after[1]).toBe(groups[1]);
+  });
+
+  it('update() still rebuilds the groups, so the nodes are new', () => {
+    stubLayout(300, 290);
+    stubControls();
+    const s = make({ textArray: ['Hi'] });
+    const groups = groupsOf(s, 0);
+    s.update({ textSpeed: 50 });
+    const after = groupsOf(s, 0);
+    expect(after).toHaveLength(2);
+    expect(after[0]).not.toBe(groups[0]);
+    expect(after[1]).not.toBe(groups[1]);
+  });
+});
+
 describe('inline styles and isolation', () => {
   it('has no custom property or var() in the shadow stylesheet', () => {
     expect(styles).not.toMatch(/--[a-zA-Z]/);

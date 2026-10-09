@@ -47,6 +47,20 @@ const readTranslateX = (page: Page, pos: Pos) =>
     return transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m41;
   }, pos);
 
+// Waits until the top track stops moving: two reads 200ms apart must match. A pause that lands a frame or more
+// late on a slow runner is waited out here, so the position that is compared afterwards is the paused one.
+const settledTrackX = async (page: Page) => {
+  let previous = await readTranslateX(page, 'top');
+  await expect(async () => {
+    await page.waitForTimeout(200);
+    const current = await readTranslateX(page, 'top');
+    const same = current === previous;
+    previous = current;
+    expect(same).toBe(true);
+  }).toPass({ timeout: 10_000 });
+  return previous;
+};
+
 const readGeometry = (page: Page, pos: Pos) =>
   page.evaluate((p) => {
     const hosts = document.querySelectorAll('body > [data-text-strip]');
@@ -64,15 +78,50 @@ const bundle = readFileSync(resolve(root, 'dist', 'index.global.js'), 'utf8');
 const inlinePage = (body: string, bodyAttrs = '') =>
   `<!doctype html><html><head><meta charset="utf-8"></head><body${bodyAttrs}>${body}</body></html>`;
 
+// The strip measures itself again right after load (fonts ready, first resize). A measure rebuilds the link
+// groups, and a rebuilt link loses focus, so tests wait until the first group has stopped being replaced.
+const settleStrip = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const shadow = (document.querySelector('body > [data-text-strip]') as HTMLElement).shadowRoot!;
+        let group = shadow.querySelector('.s .g');
+        let still = 0;
+        const frame = () => {
+          const current = shadow.querySelector('.s .g');
+          still = current === group ? still + 1 : 0;
+          group = current;
+          if (still >= 5) resolve();
+          else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }),
+  );
+
+// Focuses the nth element matching the selector in the top strip's shadow root and retries until it is the
+// active element. The focus call and the check run in one evaluate, so a re-measure cannot drop focus between them.
+const focusStripTarget = (page: Page, selector: string, index = 0) =>
+  expect(async () => {
+    const focused = await page.evaluate(
+      ({ sel, i }) => {
+        const host = document.querySelector('body > [data-text-strip]') as HTMLElement;
+        const shadow = host.shadowRoot!;
+        const target = shadow.querySelectorAll(sel)[i] as HTMLElement;
+        target.focus();
+        return shadow.activeElement === target;
+      },
+      { sel: selector, i: index },
+    );
+    expect(focused).toBe(true);
+  }).toPass({ timeout: 10_000 });
+
 // Presses Tab until the top strip's shadow root reports the element matching the selector as focused.
 // WebKit on macOS does not move focus to buttons or links with Tab by default, so there the element is
 // focused directly; the Enter and Space presses that follow still go through the keyboard.
 const focusStripElement = async (page: Page, selector: string, browserName: string) => {
+  await settleStrip(page);
   if (browserName === 'webkit') {
-    await page.evaluate((sel) => {
-      const host = document.querySelector('body > [data-text-strip]') as HTMLElement;
-      (host.shadowRoot!.querySelector(sel) as HTMLElement).focus();
-    }, selector);
+    await focusStripTarget(page, selector);
     return;
   }
   for (let i = 0; i < 10; i++) {
@@ -528,10 +577,9 @@ test.describe('pause button', () => {
   test('focusing a link in the track pauses the loop', async ({ page, browserName }) => {
     await open(page);
     await focusStripElement(page, 'a.i', browserName);
-    expect(await pauseState(page)).toMatchObject({ playState: 'paused' });
-    // WebKit applies the pause a frame late, so let the track settle before taking the baseline.
-    await page.waitForTimeout(100);
-    const a = await readTranslateX(page, 'top');
+    // WebKit can apply the pause a frame or more late, so the state is polled, then the track must stop.
+    await expect.poll(async () => (await pauseState(page)).playState).toBe('paused');
+    const a = await settledTrackX(page);
     await page.waitForTimeout(300);
     expect(await readTranslateX(page, 'top')).toBe(a);
   });
@@ -844,6 +892,131 @@ test.describe('update and resize', () => {
   });
 });
 
+test.describe('focus across a re-measure', () => {
+  // One group of these is far wider than a 600px bar, so small resizes keep the repeat count at one.
+  const LINKS = Array.from({ length: 8 }, (_, i) => ({
+    text: `Offer number ${i + 1} on the store`,
+    href: `https://example.com/offer/${i + 1}`,
+  }));
+  // Short links: one group is a fraction of a desktop bar, so a narrow bar needs a second group.
+  const SHORT_LINKS = Array.from({ length: 3 }, (_, i) => ({ text: `Deal ${i + 1}`, href: `https://example.com/deal/${i + 1}` }));
+
+  // Waits a few frames, so the ResizeObserver callback and the scheduled re-measure have run.
+  const settleFrames = (page: Page) =>
+    page.evaluate(
+      () =>
+        new Promise<void>((done) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => done())));
+        }),
+    );
+
+  // Marks the focused link and its first group, so a rebuilt node shows up as a missing mark.
+  const markFocus = (page: Page) =>
+    page.evaluate(() => {
+      const shadow = (document.querySelector('body > [data-text-strip]') as HTMLElement).shadowRoot!;
+      const active = shadow.activeElement as HTMLElement;
+      active.setAttribute('data-kept', 'link');
+      shadow.querySelector('.s .g')!.setAttribute('data-kept', 'group');
+    });
+
+  const focusState = (page: Page) =>
+    page.evaluate(() => {
+      const shadow = (document.querySelector('body > [data-text-strip]') as HTMLElement).shadowRoot!;
+      const active = shadow.activeElement as HTMLElement | null;
+      return {
+        text: active?.textContent ?? null,
+        linkMark: active?.getAttribute('data-kept') ?? null,
+        groupMark: shadow.querySelector('.s .g')?.getAttribute('data-kept') ?? null,
+        bar: (shadow.querySelector('.b') as HTMLElement).clientWidth,
+        paused: getComputedStyle(shadow.querySelector('.t') as HTMLElement).animationPlayState === 'paused',
+      };
+    });
+
+  const openLinks = async (page: Page, items: unknown[], browserName: string) => {
+    await page.setContent(
+      inlinePage(
+        `<script>${bundle}</script>` + `<script>TextStrip.create({ textArray: ${JSON.stringify(items)}, closable: true });</script>`,
+      ),
+    );
+    await page.locator('[data-text-strip]').waitFor();
+    await focusStripElement(page, 'a.i', browserName);
+  };
+
+  test('a resize that keeps the repeat count keeps keyboard focus on the same link', async ({ page, browserName }) => {
+    await page.setViewportSize({ width: 600, height: 400 });
+    await page.setContent(
+      inlinePage(`<script>${bundle}</script>` + `<script>TextStrip.create({ textArray: ${JSON.stringify(LINKS)} });</script>`),
+    );
+    await page.locator('[data-text-strip]').waitFor();
+    await focusStripElement(page, 'a.i', browserName);
+    await expect.poll(async () => (await focusState(page)).paused).toBe(true);
+    await markFocus(page);
+    const before = await focusState(page);
+    expect(before.text).toBe('Offer number 1 on the store');
+
+    const viewport = page.viewportSize()!;
+    await page.setViewportSize({ width: viewport.width + 4, height: viewport.height });
+    await settleFrames(page);
+    const after = await focusState(page);
+    // The bar changed size, so the re-measure ran, yet the same link and group are still on screen.
+    expect(after.bar).not.toBe(before.bar);
+    expect(after.text).toBe(before.text);
+    expect(after.linkMark).toBe('link');
+    expect(after.groupMark).toBe('group');
+    expect(after.paused).toBe(true);
+  });
+
+  test('toggling reduced motion re-measures without moving keyboard focus off the link', async ({
+    page,
+    browserName,
+  }) => {
+    await openLinks(page, LINKS, browserName);
+    await markFocus(page);
+    const before = await focusState(page);
+
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await settleFrames(page);
+    const after = await focusState(page);
+    expect(after.text).toBe(before.text);
+    expect(after.linkMark).toBe('link');
+    expect(after.groupMark).toBe('group');
+  });
+
+  test('a resize that changes the repeat count still fills the bar and throws nothing', async ({ page, browserName }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') errors.push(msg.text());
+    });
+    await openLinks(page, SHORT_LINKS, browserName);
+    const read = () =>
+      page.evaluate(() => {
+        const shadow = (document.querySelector('body > [data-text-strip]') as HTMLElement).shadowRoot!;
+        const set1 = shadow.querySelector('.s') as HTMLElement;
+        return {
+          bar: (shadow.querySelector('.b') as HTMLElement).clientWidth,
+          set1: set1.getBoundingClientRect().width,
+          groups: set1.querySelectorAll('.g').length,
+          group: (set1.firstElementChild as HTMLElement).getBoundingClientRect().width,
+          close: (shadow.querySelector('button.x') as HTMLElement).getBoundingClientRect().width,
+        };
+      });
+    // At desktop width one group fits, so the strip shows one group. Shrinking the bar to a little more than one
+    // group (plus half the close button) makes it stop fitting, so the repeat count goes up.
+    const wide = await read();
+    expect(wide.groups).toBe(1);
+    const target = Math.floor(wide.group + wide.close / 2);
+    const viewport = page.viewportSize()!;
+    await page.setViewportSize({ width: viewport.width - (wide.bar - target), height: viewport.height });
+    await settleFrames(page);
+
+    const narrow = await read();
+    expect(narrow.groups).not.toBe(wide.groups);
+    expect(narrow.set1).toBeGreaterThanOrEqual(narrow.bar);
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe('static strip and sticky header', () => {
   test('a static top strip scrolled under a sticky header does not paint over the header', async ({ page }) => {
     // The static strip sits under the header's bottom edge once the page scrolls 20px.
@@ -948,6 +1121,7 @@ test.describe('scroll wrapper, focus and stacking', () => {
       ),
     );
     await page.locator('[data-text-strip]').waitFor();
+    await settleStrip(page);
     const geometry = () =>
       page.evaluate(() => {
         const host = document.querySelector('[data-text-strip]') as HTMLElement;
@@ -971,11 +1145,7 @@ test.describe('scroll wrapper, focus and stacking', () => {
     for (let i = 1; i <= 8; i++) {
       if (browserName === 'webkit') {
         // WebKit on macOS does not move focus to links with Tab, so each link is focused directly.
-        await page.evaluate((n) => {
-          const host = document.querySelector('[data-text-strip]') as HTMLElement;
-          const links = host.shadowRoot!.querySelectorAll('.s .g')[0].querySelectorAll('a.i');
-          (links[n - 1] as HTMLElement).focus();
-        }, i);
+        await focusStripTarget(page, '.s .g a.i', i - 1);
       } else {
         await page.keyboard.press('Tab');
       }
@@ -1072,9 +1242,8 @@ test.describe('scroll wrapper, focus and stacking', () => {
 
     await focusStripElement(page, 'a.i', browserName);
     await expect.poll(async () => (await playState()).state).toBe('paused');
-    // WebKit applies the pause a frame late, so let the track settle before taking the baseline.
-    await page.waitForTimeout(100);
-    const a = await readTranslateX(page, 'top');
+    // WebKit can apply the pause a frame or more late, so the track must stop before the position is compared.
+    const a = await settledTrackX(page);
     await page.waitForTimeout(300);
     expect(await readTranslateX(page, 'top')).toBe(a);
   });

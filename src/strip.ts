@@ -1,271 +1,147 @@
+// The orchestrator: createTextStrip resolves the options, applies the server and dismissal guards,
+// builds the view, and wires the observers, listeners and the instance API together.
+// It holds the instance state and decides when to repaint, mount and measure. The work itself lives in
+// options.ts, render.ts, loop.ts, mount.ts, registry.ts and storage.ts.
 import { resolveOptions } from './options';
-import type { ResolvedOptions, TextItem, TextStripOptions } from './options';
-import { styles } from './styles';
+import type { ResolvedOptions, TextStripOptions } from './options';
+import { createStrip, paintOptions, paintPaused, paintScrollerFocus } from './render';
+import { measureLoop, readProgress } from './loop';
+import type { LoopState } from './loop';
+import { mountStrip } from './mount';
+import type { Slot } from './mount';
+import { registerStrip, relayout, unregisterStrip } from './registry';
+import type { RegistryEntry } from './registry';
+import { isDismissed, rememberDismissal } from './storage';
 
+/** The object returned by createTextStrip. */
 export interface TextStrip {
+  /** The host element, or null when the strip was not created (no document, or a stored dismissal). */
   element: HTMLElement | null;
-  update(o: Partial<TextStripOptions>): void;
+  /** Changes options and re-renders. The loop keeps its progress. Does nothing after destroy(). */
+  update(patch: Partial<TextStripOptions>): void;
+  /** Pauses the scrolling and shows the play state. */
   pause(): void;
+  /** Resumes the scrolling and shows the pause state. */
   play(): void;
+  /**
+   * Removes the strip and its spacer from the page, and stops its observers and media listener.
+   * The DOMContentLoaded and fonts.ready callbacks stay attached but do nothing once destroyed.
+   * Does nothing when already destroyed.
+   */
   destroy(): void;
 }
 
-// First strong character decides: skip anything that is not a letter (digits, including Arabic-Indic, are weak).
-const RTL = /^\P{L}*(?=\p{L})[\p{sc=Arab}\p{sc=Hebr}\p{sc=Syrc}\p{sc=Thaa}\p{sc=Nkoo}]/u;
-// Shared through globalThis so two copies on one page (CDN and npm) still stack and share the height variable.
-const reg: { l: { o: ResolvedOptions; b: HTMLElement }[]; e?: boolean } = ((globalThis as any)[
-  Symbol.for('text-strip')
-] ||= { l: [] });
-const live = reg.l;
-let sheet: CSSStyleSheet | undefined;
+/** Media query for the reduced-motion preference. */
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
-const inert = (): TextStrip => ({
-  element: null,
-  update() {},
-  pause() {},
-  play() {},
-  destroy() {},
-});
+/** The instance returned when nothing is created. Every method is a no-op, and element is null. */
+function inertInstance(): TextStrip {
+  return {
+    element: null,
+    update() {},
+    pause() {},
+    play() {},
+    destroy() {},
+  };
+}
 
-const make = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, parent?: Node, text?: string) => {
-  const e = document.createElement(tag);
-  e.className = cls;
-  if (text) e.textContent = text;
-  parent?.appendChild(e);
-  return e;
-};
+/** The localStorage key for remembered dismissals, or '' when rememberDismiss is off. */
+function dismissKeyOf(options: ResolvedOptions): string {
+  return typeof options.rememberDismiss === 'string' ? options.rememberDismiss : '';
+}
 
-// Constructable sheets are not blocked by a style-src CSP; <style> is the fallback for old browsers.
-const adopt = (root: ShadowRoot) => {
-  try {
-    if (!sheet) {
-      sheet = new CSSStyleSheet();
-      sheet.replaceSync(styles);
-    }
-    root.adoptedStyleSheets = [sheet];
-  } catch {
-    make('style', '', root, styles);
-  }
-};
-
-const store = (key: string, set?: boolean) => {
-  try {
-    if (set) localStorage.setItem(key, '1');
-    return localStorage.getItem(key) === '1';
-  } catch {
-    return false;
-  }
-};
-
-const txt = (x: TextItem) => (typeof x === 'string' ? x : x.text);
-
-// Only web, mail and phone links become anchors; any other scheme falls back to plain text.
-const safe = (href: string) => {
-  if (!href.trim()) return '';
-  try {
-    const u = new URL(href, document.baseURI);
-    return ['http:', 'https:', 'mailto:', 'tel:'].includes(u.protocol) ? u.href : '';
-  } catch {
-    return '';
-  }
-};
-
-// Stacks fixed and overlay strips that share a side and keeps the optional height variable in sync.
-const relayout = () => {
-  const off = { top: 0, bottom: 0 };
-  let expose = false;
-  live.forEach(({ o, b }) => {
-    if (!b.isConnected) return;
-    const s = b.style;
-    s.top = s.bottom = '';
-    if (o.stripMode !== 'static') {
-      s[o.stripPosition] = `${off[o.stripPosition]}px`;
-      off[o.stripPosition] += o.height;
-    }
-    expose = expose || o.exposeHeightVar;
-  });
-  const h = document.documentElement.style;
-  if (expose) h.setProperty('--text-strip-height', `${off.top}px`);
-  else if (reg.e) h.removeProperty('--text-strip-height');
-  reg.e = expose;
-};
-
+/**
+ * Creates one announcement strip and returns its instance.
+ * Throws on invalid options, even when there is no document, so a server render reports a bad config too.
+ * Returns an inert instance (element null) when there is no document or the visitor dismissed this strip before.
+ * Side effects: inserts the host into the page and registers the strip for stacking.
+ */
 export function createTextStrip(options: TextStripOptions): TextStrip {
-  let o: ResolvedOptions = resolveOptions(options);
-  if (typeof document === 'undefined') return inert();
+  const initial = resolveOptions(options);
+  if (typeof document === 'undefined') return inertInstance();
+  const storageKey = dismissKeyOf(initial);
+  if (storageKey && isDismissed(storageKey)) return inertInstance();
 
-  const key = () => (typeof o.rememberDismiss === 'string' ? o.rememberDismiss : '');
-  if (key() && store(key())) return inert();
-
-  const host = document.createElement('text-strip');
-  host.setAttribute('data-text-strip', '');
-  host.setAttribute('role', 'region');
-  const root = host.attachShadow({ mode: 'open' });
-  adopt(root);
-  const sp = make('div', 'sp', root);
-  const b = make('div', 'b', root);
-  const w = make('div', 'w', b);
-  const t = make('div', 't', w);
-  const set1 = make('div', 's', t);
-  const set2 = make('div', 's', t);
-  set2.setAttribute('aria-hidden', 'true');
-  const k = make('div', 'k', b);
-  const pb = make('button', 'y', k);
-  pb.type = 'button';
-  const btn = make('button', 'x', k, '×');
-  btn.type = 'button';
-
-  const me = { o, b };
-  live.push(me);
-  const mq = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const view = createStrip();
+  // Instance state that changes over the strip's life. Plain closure variables, shared by the functions below.
+  /** Current options, replaced on every update. */
+  let current: ResolvedOptions = initial;
+  /** False after destroy(). Every entry point checks it. */
   let alive = true;
+  /** True while the loop is paused by the visitor or the integrator. */
   let paused = false;
-  let lastW = -1;
-  let lastG = -1;
-  let dur = 2e4;
-  let placed = 0;
+  /** Where the host was last placed, so an unchanged placement skips the insert. */
+  let slot: Slot | undefined;
+  /** True while a measurement is queued for the next animation frame. */
   let queued = false;
-  let ro: ResizeObserver | undefined;
+  /** Measured widths and the lap duration. */
+  const loop: LoopState = { barWidth: -1, groupWidth: -1, duration: 20000 };
+  // The shared registry entry. Its options are kept in step with `current` on every apply().
+  const entry: RegistryEntry = { o: initial, b: view.bar };
+  registerStrip(entry);
+  const reducedMotion = typeof matchMedia === 'function' ? matchMedia(REDUCED_MOTION_QUERY) : null;
 
-  const pad = <E extends HTMLElement>(e: E) => {
-    e.style.padding = `0 ${o.gap / 2}px`;
-    return e;
+  // The default progress is read before the alive check. readProgress only reads, so this is harmless after destroy().
+  /**
+   * Re-measures the loop now. `at` is the progress to keep, defaulting to the current progress.
+   * Does nothing after destroy().
+   */
+  const measure = (force: boolean, at = readProgress(view, loop)) => {
+    if (alive) measureLoop(view, current, loop, force, at);
   };
 
-  const group = (hidden: boolean) => {
-    const g = make('span', 'g');
-    if (hidden) g.setAttribute('aria-hidden', 'true');
-    o.textArray.forEach((x) => {
-      const href = typeof x === 'string' ? '' : safe(x.href);
-      const e = make(href ? 'a' : 'span', 'i', g, txt(x));
-      if (href) {
-        e.setAttribute('href', href);
-        // Copies hidden from assistive technology must not take focus either.
-        if (hidden) e.tabIndex = -1;
-      }
-      pad(e);
-      if (o.separator) pad(make('span', 'p', g, o.separator)).setAttribute('aria-hidden', 'true');
-    });
-    return g;
-  };
-
-  const fill = (n: number) => {
-    set1.textContent = set2.textContent = '';
-    for (let i = 0; i < n; i++) {
-      set1.appendChild(group(i > 0));
-      set2.appendChild(group(true));
-    }
-  };
-
-  // Loop progress as a 0 to 1 fraction, so a resize or update resumes at the same point.
-  const progress = () => {
-    const a = t.getAnimations?.()[0];
-    return a ? ((Number(a.currentTime) || 0) / dur) % 1 : undefined;
-  };
-
-  const measure = (force?: boolean, at = progress()) => {
-    if (!alive) return;
-    const vw = b.clientWidth;
-    const cur = set1.firstElementChild?.getBoundingClientRect().width;
-    if (vw && !force && vw === lastW && cur === lastG) return;
-    fill(1);
-    const gw = (set1.firstElementChild as HTMLElement).getBoundingClientRect().width;
-    // Hidden or detached: keep one group and measure again once the strip has a real size.
-    lastW = vw && gw ? vw : -1;
-    lastG = gw;
-    if (lastW < 0) return;
-    // A group that fits is shown alone and still, so the pause button (only for motion) is hidden.
-    const fit = gw <= vw - k.offsetWidth + pb.offsetWidth;
-    pb.hidden = fit || !o.pauseButton;
-    b.classList.toggle('fit', fit);
-    const n = Math.ceil(vw / gw);
-    if (!fit) fill(n);
-    // Same repeat count as the DOM, so hidden repeats under reduced motion do not change the duration.
-    dur = ((n * gw) / o.textSpeed) * 1e3;
-    t.style.animationDuration = `${dur}ms`;
-    const a = t.getAnimations?.()[0];
-    if (a) a.currentTime = (at || 0) * dur;
-  };
-
+  /** Queues one measurement for the next frame. Several calls before that frame cost one measurement. */
   const schedule = () => {
     if (queued) return;
     queued = true;
     requestAnimationFrame(() => {
       queued = false;
-      measure();
+      measure(false);
     });
   };
 
-  const setTab = () => {
-    if (o.respectReducedMotion && mq && mq.matches) w.tabIndex = 0;
-    else w.removeAttribute('tabindex');
+  /** Puts the scroller in the tab order only when it is a scroll area (reduced motion). */
+  const paintFocus = () => {
+    paintScrollerFocus(view, current.respectReducedMotion && !!reducedMotion?.matches);
   };
 
-  // Reduced motion changes the repeats and the tab stop, so both are re-checked.
-  const onMotion = () => {
-    setTab();
-    lastW = -1;
-    schedule();
-  };
-
-  const setPaused = (v: boolean) => {
-    paused = v;
-    b.classList.toggle('paused', v);
-    pb.textContent = v ? '▶' : '❚❚';
-    pb.setAttribute('aria-label', v ? o.playLabel : o.pauseLabel);
-  };
-
-  // Overlay strips are appended last with no box of their own; the others reserve space in the flow.
+  /**
+   * Places the host for the current options (see mountStrip), then relayouts the stack.
+   * Does nothing once destroyed or before <body> exists, and then does not relayout either.
+   */
   const mount = () => {
     const body = document.body;
-    if (!alive || !body) return;
-    const ov = o.stripMode === 'overlay';
-    const mt = o.mountTarget;
-    const target = (ov ? body : typeof mt === 'string' ? document.querySelector(mt) : mt) || body;
-    host.toggleAttribute('data-o', ov);
-    sp.hidden = o.stripMode !== 'fixed';
-    sp.style.height = `${o.height}px`;
-    const want = ov || o.stripPosition === 'bottom' ? 2 : o.stripMode === 'static' ? 3 : 1;
-    host.toggleAttribute('data-s', want > 2);
-    // Moving a connected host drops focus inside it, so only insert when the place changes.
-    if (host.parentNode !== target || placed !== want) {
-      // Top strips keep creation order, and fixed spacers go before static strips so a fixed strip never covers one.
-      let ref = target.firstElementChild;
-      while (ref && ref !== host && ref.localName === 'text-strip' && (want > 1 || !ref.hasAttribute('data-s'))) {
-        ref = ref.nextElementSibling;
-      }
-      target.insertBefore(host, want === 2 ? null : ref);
-      placed = want;
+    if (alive && body) {
+      slot = mountStrip(view, current, slot, body);
+      relayout();
     }
-    relayout();
   };
 
+  /** Writes the current options onto the strip. Runs on create and on every update. */
   const apply = () => {
-    me.o = o;
-    const s = b.style;
-    s.height = `${o.height}px`;
-    s.background = o.stripBgColor;
-    s.color = o.textColor;
-    s.fontSize = o.fontSize;
-    s.fontFamily = o.fontFamily;
-    s.zIndex = o.stripMode === 'static' ? '' : String(o.zIndex);
-    host.setAttribute('aria-label', o.ariaLabel);
-    // 'auto' follows the first strong directional character of the texts.
-    const rtl = o.dir === 'auto' ? RTL.test(o.textArray.map(txt).join(' ')) : o.dir === 'rtl';
-    b.dir = rtl ? 'rtl' : 'ltr';
-    const cl = b.classList;
-    cl.toggle('f', o.stripMode !== 'static');
-    cl.toggle('ph', o.pauseOnHover);
-    cl.toggle('rm', o.respectReducedMotion);
-    btn.hidden = !o.closable;
-    btn.setAttribute('aria-label', o.closeLabel);
-    setPaused(paused);
-    setTab();
+    entry.o = current;
+    paintOptions(view, current);
+    paintPaused(view, current, paused);
+    paintFocus();
     mount();
+  };
+
+  const setPaused = (value: boolean) => {
+    paused = value;
+    paintPaused(view, current, value);
+  };
+
+  // Reduced motion changes the repeats and the tab stop, so both are re-checked, and the loop is re-measured.
+  const onReducedMotionChange = () => {
+    paintFocus();
+    loop.barWidth = -1;
+    schedule();
   };
 
   apply();
   measure(true);
+
+  // A script in <head> runs before <body> exists. The strip waits for DOMContentLoaded, then mounts itself.
   if (!document.body) {
     document.addEventListener(
       'DOMContentLoaded',
@@ -279,25 +155,23 @@ export function createTextStrip(options: TextStripOptions): TextStrip {
 
   // ResizeObserver ships in every evergreen browser since 2020; the guard only protects other runtimes.
   // The track is observed too, so typography changes re-measure.
-  if (typeof ResizeObserver === 'function') {
-    ro = new ResizeObserver(schedule);
-    ro.observe(b);
-    ro.observe(t);
-  }
-  mq?.addEventListener?.('change', onMotion);
+  const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : undefined;
+  resizeObserver?.observe(view.bar);
+  resizeObserver?.observe(view.track);
+  reducedMotion?.addEventListener?.('change', onReducedMotionChange);
   // Font loading changes text widths without resizing the strip, so force a re-measure.
   document.fonts?.ready.then(() => {
-    lastW = -1;
+    loop.barWidth = -1;
     schedule();
   });
 
-  const inst: TextStrip = {
-    element: host,
-    update(p) {
+  const instance: TextStrip = {
+    element: view.host,
+    update(patch) {
       if (!alive) return;
       // Read the progress before apply(): a direction change swaps the animation object.
-      const at = progress();
-      o = resolveOptions(p, o);
+      const at = readProgress(view, loop);
+      current = resolveOptions(patch, current);
       apply();
       measure(true, at);
     },
@@ -306,21 +180,22 @@ export function createTextStrip(options: TextStripOptions): TextStrip {
     destroy() {
       if (!alive) return;
       alive = false;
-      ro?.disconnect();
-      mq?.removeEventListener?.('change', onMotion);
-      host.remove();
-      live.splice(live.indexOf(me), 1);
+      resizeObserver?.disconnect();
+      reducedMotion?.removeEventListener?.('change', onReducedMotionChange);
+      view.host.remove();
+      unregisterStrip(entry);
       relayout();
     },
   };
 
-  pb.addEventListener('click', () => (paused ? inst.play() : inst.pause()));
+  view.pauseButton.addEventListener('click', () => (paused ? instance.play() : instance.pause()));
 
-  btn.addEventListener('click', () => {
-    if (key()) store(key(), true);
-    inst.destroy();
-    o.onClose?.();
+  view.closeButton.addEventListener('click', () => {
+    const key = dismissKeyOf(current);
+    if (key) rememberDismissal(key);
+    instance.destroy();
+    current.onClose?.();
   });
 
-  return inst;
+  return instance;
 }
