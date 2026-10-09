@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        text-strip has a strict size budget: the library stays under 4 KB gzip, and the library has zero runtime dependencies. New features must justify their bytes. Requests that add weight or dependencies are still welcome to discuss, but they need a strong reason.
+        text-strip has a strict size budget: the library stays about 4 KB gzip, and the library has zero runtime dependencies. New features must justify their bytes. Requests that add weight or dependencies are still welcome to discuss, but they need a strong reason.
 
   - type: textarea
     id: problem
@@ -38,5 +38,5 @@ body:
       label: Size budget
       description: Please confirm you understand the size limit.
       options:
-        - label: I understand the library must stay under 4 KB gzip, so the proposal may need to be trimmed to fit.
+        - label: I understand the library must stay about 4 KB gzip, so the proposal may need to be trimmed to fit.
           required: true

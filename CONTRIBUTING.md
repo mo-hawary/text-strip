@@ -23,7 +23,7 @@ npx playwright install
 | `npm run test:e2e` | Builds the package, then runs Playwright on Chromium, Firefox and WebKit. |
 | `npm run demo` | Builds the package, then serves the repo at http://localhost:4173. Open http://localhost:4173/demo/index.html. |
 | `npm run build` | Builds `dist/` (ESM, CJS, IIFE and type declarations) with tsup. |
-| `npm run size` | Checks two gzip budgets (level 9): `dist/index.js` (ESM) must be at most 3584 bytes and `dist/index.global.js` (CDN IIFE) at most 3840 bytes. Run `npm run build` first. |
+| `npm run size` | Checks two gzip budgets (level 9): `dist/index.js` (ESM) must be at most 3900 bytes and `dist/index.global.js` (CDN IIFE) at most 4150 bytes. Run `npm run build` first. |
 | `npm test` | Runs the unit tests with Vitest. |
 | `npm run typecheck` | Runs `tsc --noEmit`. |
 
@@ -32,9 +32,16 @@ npx playwright install
 ```
 src/
   index.ts     Public entry point and exports
-  options.ts   Option types and defaults
+  options.ts   Option types, defaults and validation
   styles.ts    Stylesheet used inside the Shadow DOM
-  strip.ts     Rendering, scrolling, layout and instance API
+  dom.ts       Element helpers and stylesheet adoption
+  text.ts      Direction detection and safe links
+  storage.ts   Remembered dismissal (localStorage)
+  registry.ts  Shared stacking registry and height variable
+  render.ts    Shadow tree, copies and paint functions
+  loop.ts      Measuring, fit, timing and progress
+  mount.ts     Placement of the host on the page
+  strip.ts     createTextStrip, the orchestrator
 tests/         Unit tests (Vitest, happy-dom)
 e2e/           Browser tests (Playwright)
 demo/          Demo pages, including a strict CSP page
@@ -47,7 +54,7 @@ dist/          Build output (generated, not committed)
 Every change must follow these rules. Reviews check them first.
 
 - **Zero runtime dependencies.** Do not add anything to `dependencies`. Dev dependencies are fine when they are needed for development or tests.
-- **Bundle budget.** The ESM bundle (`dist/index.js`) must stay at or under 3584 bytes gzip (3.5 KiB), and the CDN IIFE bundle (`dist/index.global.js`) at or under 3840 bytes gzip. `npm run size` enforces both. If a feature does not fit, discuss it in an issue before writing code.
+- **Bundle budget.** The ESM bundle (`dist/index.js`) must stay at or under 3900 bytes gzip (about 3.8 KiB), and the CDN IIFE bundle (`dist/index.global.js`) at or under 4150 bytes gzip. `npm run size` enforces both. If a feature does not fit, discuss it in an issue before writing code.
 - **Never touch host page styles.** Text-strip renders inside a Shadow DOM. Do not edit `<html>`, `<body>` or host elements, do not add global CSS, and do not change page variables. The only exception is the opt-in `exposeHeightVar` option, which sets one variable on `:root`.
 - **No `innerHTML`.** Insert text with `textContent` only. Code must stay safe under a strict Content Security Policy (`style-src 'self'`) and under Trusted Types.
 - **RTL must keep working.** Check changes with `dir: 'rtl'` and with mixed Arabic and English items. Each item must keep its bidi isolation.

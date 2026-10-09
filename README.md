@@ -3,13 +3,13 @@
 </p>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Poppins&weight=700&size=22&duration=2600&pause=700&color=F59E0B&center=true&vCenter=true&width=1000&lines=One+config+object.+Any+website.;LTR+and+RTL%2C+Arabic-first;Shadow+DOM+isolated.+CSP+safe.;Zero+dependencies.+Under+4+KB+gzip." alt="One config object. Any website. LTR and RTL, Arabic-first. Shadow DOM isolated. CSP safe. Zero dependencies. Under 4 KB gzip.">
+  <img src="https://readme-typing-svg.demolab.com?font=Poppins&weight=700&size=22&duration=2600&pause=700&color=F59E0B&center=true&vCenter=true&width=1000&lines=One+config+object.+Any+website.;LTR+and+RTL%2C+Arabic-first;Shadow+DOM+isolated.+CSP+safe.;Zero+dependencies.+About+4+KB+gzip." alt="One config object. Any website. LTR and RTL, Arabic-first. Shadow DOM isolated. CSP safe. Zero dependencies. About 4 KB gzip.">
 </p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/text-strip"><img src="https://img.shields.io/npm/v/text-strip?style=for-the-badge&labelColor=0D1117&color=F59E0B" alt="npm version"></a>
   <a href="https://github.com/mo-hawary/text-strip/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/mo-hawary/text-strip/ci.yml?branch=main&style=for-the-badge&labelColor=0D1117&label=CI" alt="CI"></a>
-  <a href="https://bundlejs.com/?q=text-strip"><img src="https://img.shields.io/badge/gzip-under%204%20KB-F59E0B?style=for-the-badge&labelColor=0D1117" alt="gzip under 4 KB"></a>
+  <a href="https://bundlejs.com/?q=text-strip"><img src="https://img.shields.io/badge/gzip-about%204%20KB-F59E0B?style=for-the-badge&labelColor=0D1117" alt="gzip about 4 KB"></a>
   <a href="https://www.npmjs.com/package/text-strip?activeTab=dependencies"><img src="https://img.shields.io/badge/dependencies-zero-F59E0B?style=for-the-badge&labelColor=0D1117" alt="zero dependencies"></a>
   <a href="./src/options.ts"><img src="https://img.shields.io/badge/TypeScript-typed-F59E0B?style=for-the-badge&labelColor=0D1117&logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="#rtl-and-bidi-notes"><img src="https://img.shields.io/badge/RTL-ready-F59E0B?style=for-the-badge&labelColor=0D1117" alt="RTL ready"></a>
@@ -39,7 +39,7 @@ A store needs a "free shipping" bar in Arabic and English. Adding it should not 
 - **Arabic-first RTL.** `dir: 'auto'` reads the first strong character and picks the scroll direction. Each item is bidi-isolated, so mixed Arabic and English items keep their word order.
 - **Isolated both ways.** Shadow DOM keeps page styles out of the strip and the strip's styles out of the page. It works under a strict CSP and with Trusted Types, because text is never inserted as HTML.
 - **Accessible.** A visible pause button, reduced-motion support, keyboard operable controls, and a focus pause for links inside the moving text.
-- **Tiny.** Zero dependencies and under 4 KB gzip (ESM 3.44 KB, CDN 3.66 KB).
+- **Tiny.** Zero dependencies and about 4 KB gzip (ESM 3.8 KB, CDN 4.0 KB).
 
 ## Quick start
 
@@ -403,6 +403,22 @@ Modern evergreen browsers: Chrome, Edge, Firefox and Safari. The strip uses Shad
 
 - **Runtime `rememberDismiss`:** changing `rememberDismiss` at runtime with `update()` does not hide a strip that is already visible.
 - **Focus on links:** keyboard focus on a link that has scrolled out of view cannot scroll it back into view while the loop runs. The loop pauses on focus, but the strip's clipped box does not scroll to reveal the link. With `prefers-reduced-motion: reduce` the strip is a scroll area, so the link can be reached there.
+
+## Project structure
+
+The library source is in `src/`. Each module has one job:
+
+- `index.ts`: public exports (`createTextStrip`, its `create` alias, `DEFAULTS` and the public types).
+- `options.ts`: public types, defaults, and validation of caller options.
+- `styles.ts`: the shadow CSS as one string, kept in cascade order.
+- `dom.ts`: element helpers and stylesheet adoption into the shadow root.
+- `text.ts`: direction detection, text of an item, and safe link checks.
+- `storage.ts`: remembered dismissal in `localStorage`.
+- `registry.ts`: shared stacking registry and the `--text-strip-height` variable.
+- `render.ts`: the shadow tree, its copies, and painting of options and state.
+- `loop.ts`: measuring, fit, lap timing and progress.
+- `mount.ts`: placement of the host on the page.
+- `strip.ts`: `createTextStrip`, the orchestrator that wires the modules together.
 
 ## Contributing
 

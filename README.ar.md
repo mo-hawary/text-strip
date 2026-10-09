@@ -3,13 +3,13 @@
 </p>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Poppins&weight=700&size=22&duration=2600&pause=700&color=F59E0B&center=true&vCenter=true&width=1000&lines=One+config+object.+Any+website.;LTR+and+RTL%2C+Arabic-first;Shadow+DOM+isolated.+CSP+safe.;Zero+dependencies.+Under+4+KB+gzip." alt="One config object. Any website. LTR and RTL, Arabic-first. Shadow DOM isolated. CSP safe. Zero dependencies. Under 4 KB gzip.">
+  <img src="https://readme-typing-svg.demolab.com?font=Poppins&weight=700&size=22&duration=2600&pause=700&color=F59E0B&center=true&vCenter=true&width=1000&lines=One+config+object.+Any+website.;LTR+and+RTL%2C+Arabic-first;Shadow+DOM+isolated.+CSP+safe.;Zero+dependencies.+About+4+KB+gzip." alt="One config object. Any website. LTR and RTL, Arabic-first. Shadow DOM isolated. CSP safe. Zero dependencies. About 4 KB gzip.">
 </p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/text-strip"><img src="https://img.shields.io/npm/v/text-strip?style=for-the-badge&labelColor=0D1117&color=F59E0B" alt="npm version"></a>
   <a href="https://github.com/mo-hawary/text-strip/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/mo-hawary/text-strip/ci.yml?branch=main&style=for-the-badge&labelColor=0D1117&label=CI" alt="CI"></a>
-  <a href="https://bundlejs.com/?q=text-strip"><img src="https://img.shields.io/badge/gzip-under%204%20KB-F59E0B?style=for-the-badge&labelColor=0D1117" alt="gzip under 4 KB"></a>
+  <a href="https://bundlejs.com/?q=text-strip"><img src="https://img.shields.io/badge/gzip-about%204%20KB-F59E0B?style=for-the-badge&labelColor=0D1117" alt="gzip about 4 KB"></a>
   <a href="https://www.npmjs.com/package/text-strip?activeTab=dependencies"><img src="https://img.shields.io/badge/dependencies-zero-F59E0B?style=for-the-badge&labelColor=0D1117" alt="zero dependencies"></a>
   <a href="./src/options.ts"><img src="https://img.shields.io/badge/TypeScript-typed-F59E0B?style=for-the-badge&labelColor=0D1117&logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="README.md#rtl-and-bidi-notes"><img src="https://img.shields.io/badge/RTL-ready-F59E0B?style=for-the-badge&labelColor=0D1117" alt="RTL ready"></a>
@@ -41,7 +41,7 @@
 - **RTL أولاً بالعربية.** القيمة `dir: 'auto'` تقرأ أول حرف له اتجاه واضح وتختار اتجاه الحركة. كل عنصر معزول لخوارزمية bidi، فتحافظ العناصر المختلطة من العربية والإنجليزية على ترتيب كلماتها.
 - **معزول في الاتجاهين.** يمنع Shadow DOM أنماط الصفحة من التأثير في الشريط، ويمنع أنماط الشريط من التأثير في الصفحة. يعمل مع سياسة أمان المحتوى الصارمة (CSP) ومع Trusted Types، لأن النص لا يُدرج أبداً كـ HTML.
 - **سهل الوصول.** زر إيقاف مؤقت مرئي، ودعم لتقليل الحركة، وعناصر تعمل بلوحة المفاتيح، وإيقاف الحركة عند التركيز على رابط داخل النص المتحرك.
-- **خفيف.** بلا أي تبعيات، وأقل من 4 كيلوبايت بعد الضغط (ESM بحجم 3.44 KB، وCDN بحجم 3.66 KB).
+- **خفيف.** بلا أي تبعيات، وحوالي 4 كيلوبايت بعد الضغط (ESM بحجم 3.8 KB، وCDN بحجم 4.0 KB).
 
 ## البداية السريعة
 
@@ -211,6 +211,22 @@ createTextStrip({
 ## المؤلف والتواصل
 
 من إعداد وصيانة **Mohamed ElHawary** (محمد الهواري). للاستفسارات أو التعاون أو التوظيف، يمكنك التواصل عبر [LinkedIn](https://www.linkedin.com/in/mohawary). تُرفع الأخطاء وطلبات الميزات الجديدة إلى [GitHub issues](https://github.com/mo-hawary/text-strip/issues)، أما تقارير الثغرات الأمنية فتُرسل وفق [SECURITY.md](SECURITY.md).
+
+## هيكل المشروع
+
+الكود المصدري في `src/`، ولكل وحدة وظيفة واحدة:
+
+- `index.ts`: التصديرات العامة (`createTextStrip` واسمه المختصر `create`، و`DEFAULTS`، والأنواع العامة).
+- `options.ts`: الأنواع العامة والقيم الافتراضية والتحقق من الخيارات.
+- `styles.ts`: CSS الشريط كنص واحد داخل الظل (Shadow DOM)، بالترتيب الذي يعتمد عليه تطبيق الأنماط.
+- `dom.ts`: مساعدات العناصر وتطبيق ورقة الأنماط داخل الظل.
+- `text.ts`: كشف اتجاه النصوص، ونص العنصر، والتحقق من الروابط الآمنة.
+- `storage.ts`: تذكّر الإغلاق في `localStorage`.
+- `registry.ts`: السجل المشترك لترتيب الأشرطة والمتغير `--text-strip-height`.
+- `render.ts`: شجرة الظل ونسخها، وتطبيق الخيارات والحالة.
+- `loop.ts`: القياس والملاءمة وتوقيت الدورة والتقدم.
+- `mount.ts`: وضع العنصر المضيف في الصفحة.
+- `strip.ts`: `createTextStrip`، المنسّق الذي يربط الوحدات ببعضها.
 
 ## المساهمة والأمان والرخصة
 

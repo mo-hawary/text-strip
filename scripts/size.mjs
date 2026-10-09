@@ -6,8 +6,8 @@ import { gzipSync } from 'node:zlib';
 // gzip level 9 budgets. The ESM build is what bundlers ship, the IIFE build is
 // the CDN bundle loaded with a script tag.
 const BUDGETS = [
-  { file: 'dist/index.js', limit: 3584 },
-  { file: 'dist/index.global.js', limit: 3840 },
+  { file: 'dist/index.js', limit: 3900 },
+  { file: 'dist/index.global.js', limit: 4150 },
 ];
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');

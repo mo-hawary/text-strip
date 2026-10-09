@@ -35,7 +35,8 @@ First public release.
 - Content Security Policy and Trusted Types safe rendering, with no `innerHTML`. Works under `style-src 'self'` in browsers with constructable stylesheets.
 - Safe to load in `<head>` and during server-side rendering.
 - ESM, CJS and IIFE/CDN builds with TypeScript types.
-- Bundle size under 4 KB gzip (ESM 3.44 KB, CDN 3.66 KB), enforced by `npm run size` for both the ESM and the CDN build.
+- Bundle size about 4 KB gzip (ESM 3.8 KB, CDN 4.0 KB), enforced by `npm run size` for both the ESM and the CDN build.
+- Source split into small single-purpose modules with comments for readability.
 
 [Unreleased]: https://github.com/mo-hawary/text-strip/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/mo-hawary/text-strip/releases/tag/v0.1.0
