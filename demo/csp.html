@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="style-src 'self'; require-trusted-types-for 'script'" />
+    <title>text-strip CSP demo</title>
+  </head>
+  <body>
+    <main>
+      <p>The strip must render under a style-src 'self' policy and Trusted Types enforcement.</p>
+    </main>
+    <script src="/dist/index.global.js"></script>
+    <script>
+      window.csp_strip = TextStrip.create({
+        textArray: ['Strict CSP strip'],
+        stripBgColor: '#111111',
+        textColor: '#ffffff',
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,71 @@
+{
+  "name": "text-strip",
+  "version": "0.1.0",
+  "description": "A drop-in, zero-dependency scrolling announcement strip for any website. LTR and RTL, Arabic-first.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/index.global.js",
+  "jsdelivr": "./dist/index.global.js",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json",
+    "./global": "./dist/index.global.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "size": "node scripts/size.mjs",
+    "demo": "node scripts/serve.mjs",
+    "check": "npm run typecheck && npm test && npm run build && npm run size",
+    "pretest:e2e": "npm run build"
+  },
+  "keywords": [
+    "marquee",
+    "ticker",
+    "announcement-bar",
+    "strip",
+    "rtl",
+    "arabic",
+    "vanilla",
+    "banner"
+  ],
+  "author": "Mohamed Adel <dev.elhawary@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^26.6.4",
+    "happy-dom": "^20.14.6",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mo-hawary/text-strip.git"
+  },
+  "homepage": "https://github.com/mo-hawary/text-strip#readme",
+  "bugs": {
+    "url": "https://github.com/mo-hawary/text-strip/issues"
+  }
+}
