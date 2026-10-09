@@ -60,8 +60,20 @@ jobs:
 
       - run: npm run test:e2e
 
-      - name: Publish to npm
+      - name: Check whether this version is already on npm
+        id: published
         if: github.event_name == 'push'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "text-strip@$VERSION" version >/dev/null 2>&1; then
+            echo "text-strip@$VERSION is already on npm; skipping publish."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: github.event_name == 'push' && steps.published.outputs.exists == 'false'
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
