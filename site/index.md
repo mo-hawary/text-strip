@@ -12,6 +12,8 @@ With npm, for a bundler project:
 npm install text-strip
 ```
 
+Published on npm: [text-strip](https://www.npmjs.com/package/text-strip).
+
 With a script tag, for a plain page. Pin the minor version (`@0.1`) on live sites:
 
 ```html

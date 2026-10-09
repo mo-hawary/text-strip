@@ -19,6 +19,7 @@
 
 <p align="center">
   <a href="https://mo-hawary.github.io/text-strip/"><strong>Live demo</strong></a> &nbsp;·&nbsp;
+  <a href="https://www.npmjs.com/package/text-strip"><strong>npm</strong></a> &nbsp;·&nbsp;
   <a href="README.ar.md"><strong>العربية</strong></a> &nbsp;·&nbsp;
   <a href="./CHANGELOG.md"><strong>Changelog</strong></a> &nbsp;·&nbsp;
   <a href="./CONTRIBUTING.md"><strong>Contributing</strong></a> &nbsp;·&nbsp;
@@ -48,6 +49,8 @@ With npm:
 ```sh
 npm install text-strip
 ```
+
+Published on npm: [text-strip](https://www.npmjs.com/package/text-strip).
 
 ```js
 import { createTextStrip } from 'text-strip';

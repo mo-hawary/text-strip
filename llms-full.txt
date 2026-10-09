@@ -10,6 +10,8 @@ With npm:
 npm install text-strip
 ```
 
+Published on npm: [text-strip](https://www.npmjs.com/package/text-strip).
+
 ```js
 import { createTextStrip } from 'text-strip';
 ```

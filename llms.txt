@@ -15,10 +15,11 @@
 - [Agent skill](https://raw.githubusercontent.com/mo-hawary/text-strip/main/skills/text-strip/SKILL.md): step-by-step workflow for adding a strip to a site, with examples and a stripMode decision table.
 - [API reference](https://raw.githubusercontent.com/mo-hawary/text-strip/main/skills/text-strip/references/api.md): every option with its type and default, the instance methods and edge cases.
 - [Recipes](https://raw.githubusercontent.com/mo-hawary/text-strip/main/skills/text-strip/references/recipes.md): Shopify, WordPress, React, Next.js, Vue, Svelte and plain HTML.
+- [npm package](https://www.npmjs.com/package/text-strip): published package page.
 
 ## Types
 
-- [TypeScript declarations](https://unpkg.com/text-strip/dist/index.d.ts): exported types `TextStripOptions`, `TextItem`, `StripMode`, `StripPosition`, `TextDir` and `TextStrip`.
+- [TypeScript declarations](https://cdn.jsdelivr.net/npm/text-strip/dist/index.d.ts): exported types `TextStripOptions`, `TextItem`, `StripMode`, `StripPosition`, `TextDir` and `TextStrip`.
 
 ## Optional
 

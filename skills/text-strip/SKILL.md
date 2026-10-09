@@ -19,7 +19,7 @@ Use it for a site-wide announcement bar, promo or shipping banner, news ticker, 
 
 1. Detect the framework: plain HTML, Shopify theme, WordPress, React, Next.js (App Router or Pages), Vue, Svelte, or other.
 2. Install or load:
-   - npm project: `npm install text-strip`, then `import { createTextStrip } from 'text-strip';`
+   - npm project: `npm install text-strip` (package page: https://www.npmjs.com/package/text-strip), then `import { createTextStrip } from 'text-strip';`
    - No build step, or a CMS: add the CDN script `https://cdn.jsdelivr.net/npm/text-strip@0.1/dist/index.global.js` and call `TextStrip.create(...)`. Pin `@0.1`.
 3. Add the call in the right lifecycle place:
    - React and Next.js App Router: a client component (`'use client'`) that creates the strip in `useEffect` and returns `() => strip.destroy()`.
