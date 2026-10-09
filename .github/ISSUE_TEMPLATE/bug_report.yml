@@ -1,0 +1,82 @@
+name: Bug report
+description: Report a problem with text-strip
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please do not report security vulnerabilities here. Use the private reporting link in the issue chooser instead.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is the problem?
+      placeholder: A short summary of what goes wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: The smallest steps that show the problem.
+      placeholder: |
+        1. Create a strip with ...
+        2. Resize the window / scroll / hover ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead? Include console errors if there are any.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: text-strip version
+      description: The version from your package.json or the CDN URL.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: browser-os
+    attributes:
+      label: Browser and OS
+      description: For example, Chrome 130 on macOS 15, or Safari 18 on iOS 18.
+      placeholder: "Chrome 130 on macOS 15"
+    validations:
+      required: true
+
+  - type: textarea
+    id: options
+    attributes:
+      label: Options object
+      description: Paste the options you passed to createTextStrip (remove anything private).
+      render: javascript
+    validations:
+      required: true
+
+  - type: input
+    id: repro-link
+    attributes:
+      label: Minimal reproduction
+      description: A link to a CodeSandbox, StackBlitz, GitHub repo or a page where the problem shows. A minimal repro helps us fix this faster.
+      placeholder: https://
+    validations:
+      required: false

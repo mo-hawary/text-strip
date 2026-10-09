@@ -112,7 +112,7 @@
       var stack = params.get('stack') === '1';
       // The sticky header relies on the height variable, so it is on by default; exposevar=0 turns it off.
       var exposeVar = params.get('exposevar') !== '0';
-      var mode = params.get('mode') === 'static' ? 'static' : 'fixed';
+      var mode = ['static', 'overlay'].indexOf(params.get('mode')) >= 0 ? params.get('mode') : 'fixed';
       var speed = 60;
 
       if (hostile) {
@@ -122,20 +122,28 @@
           'font-weight: 900 !important; line-height: 5 !important; font-style: italic !important; ' +
           'letter-spacing: 10px !important } ' +
           'body { --ts-ff: cursive; --g: 200px } ' +
-          'div, span { display: none !important }';
+          'div, span { display: none !important } ' +
+          'text-strip::before, text-strip::after { content: "x"; display: block; height: 100px } ' +
+          '@property --g { syntax: "<length>"; inherits: false; initial-value: 200px }';
         document.head.appendChild(hostileStyle);
       }
 
       window.top_strip = TextStrip.create({
         textArray: single
           ? ['Hi']
-          : ['Free shipping this week', 'New: dark mode is here', 'Join 10,000 developers'],
+          : [
+              'Free shipping this week on every order over $50',
+              'New: dark mode is here, with a faster theme switcher',
+              { text: 'Star on GitHub', href: 'https://github.com/mo-hawary/text-strip' },
+              'Join 10,000 developers in our community',
+              'Release 2.0 brings RTL text and pause controls',
+            ],
         stripBgColor: '#111111',
         textColor: '#ffffff',
         textSpeed: speed,
         stripPosition: 'top',
         stripMode: mode,
-        dir: 'ltr',
+        dir: 'auto',
         exposeHeightVar: exposeVar,
       });
 
@@ -147,7 +155,7 @@
           textSpeed: speed,
           stripPosition: 'top',
           stripMode: mode,
-          dir: 'ltr',
+          dir: 'auto',
           exposeHeightVar: exposeVar,
         });
       }
@@ -156,16 +164,19 @@
         ? null
         : TextStrip.create({
             textArray: [
-              'شحن مجاني هذا الأسبوع',
-              'جديد: الوضع الداكن',
-              'Text Strip تدعم العربية',
+              'شحن مجاني هذا الأسبوع لجميع الطلبات فوق 50 دولار',
+              'جديد: الوضع الداكن مع مبدّل سمات أسرع',
+              'Text Strip تدعم العربية والإنجليزية في الشريط نفسه',
+              'انضم إلى أكثر من 10,000 مطور في مجتمعنا',
+              'عروض الخريف: خصم يصل إلى 30% على المجموعات المختارة',
+              'Autumn sale: up to 30% off selected collections',
             ],
             stripBgColor: '#1d4ed8',
             textColor: '#ffffff',
             textSpeed: speed,
             stripPosition: 'bottom',
             stripMode: mode,
-            dir: 'rtl',
+            dir: 'auto',
             closable: true,
             rememberDismiss: 'ts-demo-bottom',
           });

@@ -1,9 +1,10 @@
 export type StripPosition = 'top' | 'bottom';
-export type StripMode = 'fixed' | 'static';
-export type TextDir = 'ltr' | 'rtl';
+export type StripMode = 'fixed' | 'overlay' | 'static';
+export type TextDir = 'ltr' | 'rtl' | 'auto';
+export type TextItem = string | { text: string; href: string };
 
 export interface TextStripOptions {
-  textArray: string[];
+  textArray: TextItem[];
   stripBgColor?: string;
   textColor?: string;
   textSpeed?: number;
@@ -18,10 +19,12 @@ export interface TextStripOptions {
   fontFamily?: string;
   pauseOnHover?: boolean;
   respectReducedMotion?: boolean;
-  pushContent?: boolean;
   closable?: boolean;
   rememberDismiss?: false | string;
   closeLabel?: string;
+  pauseButton?: boolean;
+  pauseLabel?: string;
+  playLabel?: string;
   exposeHeightVar?: boolean;
   zIndex?: number;
   ariaLabel?: string;
@@ -38,7 +41,7 @@ export const DEFAULTS: Readonly<Omit<ResolvedOptions, 'textArray'>> = Object.fre
   stripPosition: 'top',
   stripMode: 'fixed',
   mountTarget: null,
-  dir: 'ltr',
+  dir: 'auto',
   separator: '•',
   gap: 32,
   height: 40,
@@ -46,38 +49,37 @@ export const DEFAULTS: Readonly<Omit<ResolvedOptions, 'textArray'>> = Object.fre
   fontFamily: 'inherit',
   pauseOnHover: true,
   respectReducedMotion: true,
-  pushContent: true,
   closable: false,
   rememberDismiss: false,
   closeLabel: 'Close',
+  pauseButton: true,
+  pauseLabel: 'Pause',
+  playLabel: 'Play',
   exposeHeightVar: false,
   zIndex: 9999,
   ariaLabel: 'Announcements',
 });
 
-const num = (v: unknown) => typeof v === 'number' && isFinite(v);
+const item = (x: TextItem) =>
+  typeof x === 'string'
+    ? x.trim() !== ''
+    : !!x && typeof x.text === 'string' && x.text.trim() !== '' && typeof x.href === 'string';
 
 // Short messages keep the CDN bundle under its size budget; README documents each option.
-export function resolveOptions(input: TextStripOptions): ResolvedOptions {
-  const defined = Object.fromEntries(
-    Object.entries(input || {}).filter(([, v]) => v !== undefined),
-  );
-  const o = { ...DEFAULTS, ...defined } as ResolvedOptions;
+// Options passed as undefined keep the value from base (the defaults, or the current options on update).
+export function resolveOptions(input: Partial<TextStripOptions>, base: object = DEFAULTS): ResolvedOptions {
+  const defined = Object.fromEntries(Object.entries(input || {}).filter(([, v]) => v !== undefined));
+  const o = { ...base, ...defined } as ResolvedOptions;
   const t = o.mountTarget;
   const bad: [string, boolean][] = [
-    [
-      'textArray',
-      !Array.isArray(o.textArray) ||
-        !o.textArray.length ||
-        !o.textArray.every((x) => typeof x === 'string' && x.trim() !== ''),
-    ],
-    ['textSpeed', !num(o.textSpeed) || o.textSpeed <= 0],
-    ['height', !num(o.height) || o.height <= 0],
-    ['gap', !num(o.gap) || o.gap < 0],
+    ['textArray', !Array.isArray(o.textArray) || !o.textArray.length || !o.textArray.every(item)],
+    ['textSpeed', !(Number.isFinite(o.textSpeed) && o.textSpeed > 0)],
+    ['height', !(Number.isFinite(o.height) && o.height > 0)],
+    ['gap', !(Number.isFinite(o.gap) && o.gap >= 0)],
     ['stripPosition', o.stripPosition !== 'top' && o.stripPosition !== 'bottom'],
-    ['stripMode', o.stripMode !== 'fixed' && o.stripMode !== 'static'],
+    ['stripMode', !['fixed', 'overlay', 'static'].includes(o.stripMode)],
     ['mountTarget', t !== null && typeof t !== 'string' && !(t && (t as Node).nodeType === 1)],
-    ['dir', o.dir !== 'ltr' && o.dir !== 'rtl'],
+    ['dir', !['ltr', 'rtl', 'auto'].includes(o.dir)],
   ];
   bad.forEach(([k, b]) => {
     if (b) throw new Error(`TextStrip: invalid ${k}`);

@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>text-strip: scrolling announcement bar for any website</title>
+    <meta
+      name="description"
+      content="text-strip is a drop-in scrolling announcement bar with LTR and RTL support, Arabic-first, Shadow DOM isolated and zero dependencies."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e7490'/%3E%3Crect x='5' y='13' width='22' height='6' rx='3' fill='%23ffffff'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --text: #18181b;
+        --muted: #52525b;
+        --border: #e4e4e7;
+        --accent: #0e7490;
+        --accent-text: #ffffff;
+        --code-bg: #f4f4f5;
+        --focus: #0e7490;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0c0c10;
+          --surface: #16161d;
+          --text: #f4f4f5;
+          --muted: #a1a1aa;
+          --border: #2a2a35;
+          --accent: #22d3ee;
+          --accent-text: #041014;
+          --code-bg: #1f1f28;
+          --focus: #67e8f9;
+          --shadow: none;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+          'Noto Sans Arabic', Tahoma, sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+
+      .skip-link {
+        position: absolute;
+        inset-inline-start: 16px;
+        top: -100px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        background: var(--accent);
+        color: var(--accent-text);
+        text-decoration: none;
+        z-index: 10000;
+      }
+
+      .skip-link:focus {
+        top: 16px;
+      }
+
+      .wrap {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      /* The top strip sets --text-strip-height on :root (exposeHeightVar), so the header sticks below it. */
+      .site-header {
+        position: sticky;
+        top: var(--text-strip-height, 0);
+        z-index: 10;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 60px;
+      }
+
+      .brand {
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: var(--text);
+        text-decoration: none;
+        letter-spacing: -0.01em;
+      }
+
+      .site-header nav a {
+        margin-inline-start: 20px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.95rem;
+      }
+
+      .site-header nav a:hover {
+        color: var(--text);
+        text-decoration: underline;
+      }
+
+      .hero {
+        padding: 72px 0 56px;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        font-size: clamp(2.5rem, 7vw, 4rem);
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+      }
+
+      .pitch {
+        margin: 0 0 28px;
+        max-width: 640px;
+        font-size: 1.2rem;
+        color: var(--muted);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 18px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--text);
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+      }
+
+      .btn:hover {
+        border-color: var(--muted);
+      }
+
+      .btn.primary {
+        border-color: transparent;
+        background: var(--accent);
+        color: var(--accent-text);
+      }
+
+      section {
+        padding: 56px 0;
+        border-top: 1px solid var(--border);
+      }
+
+      section[id] {
+        scroll-margin-top: 96px;
+      }
+
+      h2 {
+        margin: 0 0 8px;
+        font-size: 1.75rem;
+        letter-spacing: -0.02em;
+      }
+
+      .lead {
+        margin: 0 0 28px;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .card {
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .card h3 {
+        margin: 0 0 6px;
+        font-size: 1rem;
+      }
+
+      .card p {
+        margin: 0;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      .panel {
+        padding: 24px;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 16px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .field-wide {
+        grid-column: 1 / -1;
+      }
+
+      .field label,
+      .field .label {
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .field .value {
+        font-weight: 400;
+        color: var(--muted);
+      }
+
+      .field .hint {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+        font: inherit;
+      }
+
+      input[type='color'] {
+        height: 40px;
+        padding: 3px;
+        cursor: pointer;
+      }
+
+      input[type='range'] {
+        padding: 0;
+        accent-color: var(--accent);
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+        line-height: 1.5;
+      }
+
+      .note {
+        margin: -12px 0 20px;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .error {
+        margin: 12px 0 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #b91c1c;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .error {
+          color: #fca5a5;
+        }
+      }
+
+      .snippet-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 28px 0 12px;
+      }
+
+      .snippet-head h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .copy-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .copy-btn {
+        padding: 8px 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .copy-btn:hover {
+        border-color: var(--muted);
+      }
+
+      .status {
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      pre {
+        margin: 0;
+        padding: 16px;
+        overflow-x: auto;
+        border-radius: 12px;
+        background: var(--code-bg);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        white-space: pre;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      .install {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+      }
+
+      .install h3 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+      }
+
+      footer {
+        padding: 32px 0 48px;
+        border-top: 1px solid var(--border);
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      footer .wrap {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      @media (max-width: 600px) {
+        .wrap {
+          padding: 0 16px;
+        }
+
+        .site-header nav a {
+          margin-inline-start: 14px;
+        }
+
+        .hero {
+          padding: 48px 0 40px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="wrap bar">
+        <a class="brand" href="#">text-strip</a>
+        <nav aria-label="Primary">
+          <a href="#playground">Playground</a>
+          <a href="#install">Install</a>
+          <a href="https://github.com/mo-hawary/text-strip">GitHub</a>
+          <a href="https://www.npmjs.com/package/text-strip">npm</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <div class="wrap">
+        <section class="hero" aria-labelledby="hero-title">
+          <p class="eyebrow">Scrolling announcement bar</p>
+          <h1 id="hero-title">text-strip</h1>
+          <p class="pitch">
+            Drop-in scrolling announcement bar. LTR and RTL, Arabic-first, Shadow DOM isolated, under
+            4 KB, zero dependencies.
+          </p>
+          <div class="actions">
+            <a class="btn primary" href="#playground">Try the playground</a>
+            <a class="btn" href="https://github.com/mo-hawary/text-strip">View on GitHub</a>
+            <a class="btn" href="https://www.npmjs.com/package/text-strip">View on npm</a>
+          </div>
+        </section>
+
+        <section aria-labelledby="features-title">
+          <h2 id="features-title">Why text-strip</h2>
+          <p class="lead">One config object, no framework, and nothing leaks in or out of the page.</p>
+          <ul class="grid">
+            <li class="card">
+              <h3>LTR and RTL</h3>
+              <p>Scroll direction follows the text. Arabic reads naturally as it enters the screen.</p>
+            </li>
+            <li class="card">
+              <h3>Arabic-first</h3>
+              <p>Mixed Arabic and English items keep the word order of each item intact.</p>
+            </li>
+            <li class="card">
+              <h3>Shadow DOM isolated</h3>
+              <p>Its styles cannot leak out, and your page CSS cannot reach in.</p>
+            </li>
+            <li class="card">
+              <h3>Under 4 KB</h3>
+              <p>A small bundle that is fast to load, even from a CDN.</p>
+            </li>
+            <li class="card">
+              <h3>Zero dependencies</h3>
+              <p>Nothing else to install, audit or update. Works with plain HTML.</p>
+            </li>
+            <li class="card">
+              <h3>Accessible</h3>
+              <p>Pauses on hover and focus, respects reduced motion, and labels its close button.</p>
+            </li>
+          </ul>
+        </section>
+
+        <section id="playground" aria-labelledby="playground-title">
+          <h2 id="playground-title">Playground</h2>
+          <p class="lead">
+            The controls update the top strip live. Copy the snippet to use the same settings on your site.
+          </p>
+          <p class="note">Short text that fits is shown centered without scrolling. Longer text scrolls.</p>
+
+          <form class="panel" id="playground-form" autocomplete="off">
+            <div class="fields">
+              <div class="field">
+                <label for="bg-color">Background color</label>
+                <input type="color" id="bg-color" />
+              </div>
+              <div class="field">
+                <label for="text-color">Text color</label>
+                <input type="color" id="text-color" />
+              </div>
+              <div class="field">
+                <label for="speed">
+                  Speed <span class="value" id="speed-value"></span>
+                </label>
+                <input type="range" id="speed" min="20" max="150" step="5" />
+              </div>
+              <div class="field">
+                <label for="position">Position</label>
+                <select id="position">
+                  <option value="top">top</option>
+                  <option value="bottom">bottom</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="mode">Mode</label>
+                <select id="mode">
+                  <option value="fixed">fixed</option>
+                  <option value="overlay">overlay</option>
+                  <option value="static">static</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="dir">Direction</label>
+                <select id="dir">
+                  <option value="auto">auto</option>
+                  <option value="ltr">ltr</option>
+                  <option value="rtl">rtl</option>
+                </select>
+              </div>
+              <div class="field field-wide">
+                <label for="texts">Texts, one per line</label>
+                <textarea id="texts" spellcheck="false"></textarea>
+                <span class="hint">
+                  For a link, end the line with a separator and a URL: Text | https://example.com
+                </span>
+              </div>
+            </div>
+            <p class="error" id="texts-error" role="alert" hidden>
+              Enter at least one text. The strip keeps its last valid texts.
+            </p>
+          </form>
+
+          <div class="snippet-head">
+            <h3>CDN snippet</h3>
+            <div class="copy-row">
+              <span class="status" id="copy-status" role="status"></span>
+              <button type="button" class="copy-btn" id="copy-btn">Copy</button>
+            </div>
+          </div>
+          <pre dir="ltr"><code id="snippet"></code></pre>
+        </section>
+
+        <section id="install" aria-labelledby="install-title">
+          <h2 id="install-title">Install</h2>
+          <p class="lead">Use npm for a bundler project, or a script tag for a plain page.</p>
+          <div class="install">
+            <div>
+              <h3>npm</h3>
+              <pre dir="ltr"><code>npm install text-strip</code></pre>
+            </div>
+            <div>
+              <h3>Script tag</h3>
+              <pre dir="ltr"><code>&lt;script src="https://cdn.jsdelivr.net/npm/text-strip@0.1/dist/index.global.js"&gt;&lt;/script&gt;</code></pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <span>text-strip is MIT licensed.</span>
+        <span>
+          <a href="https://github.com/mo-hawary/text-strip">GitHub</a> ·
+          <a href="https://www.npmjs.com/package/text-strip">npm</a>
+        </span>
+      </div>
+    </footer>
+
+    <script src="./dist/index.global.js"></script>
+    <script>
+      (function () {
+        var GITHUB_URL = 'https://github.com/mo-hawary/text-strip';
+        var CDN_URL = 'https://cdn.jsdelivr.net/npm/text-strip@0.1/dist/index.global.js';
+
+        var TOP_TEXTS = [
+          'Drop-in scrolling announcement bar for any website',
+          { text: 'Star text-strip on GitHub', href: GITHUB_URL },
+          'Zero dependencies, under 4 KB',
+          'LTR and RTL, Arabic-first, ready out of the box',
+          'Shadow DOM isolated, so your page CSS cannot break it',
+          'Pauses on hover and focus, and respects reduced motion',
+        ];
+
+        var $ = function (id) {
+          return document.getElementById(id);
+        };
+
+        var els = {
+          bg: $('bg-color'),
+          text: $('text-color'),
+          speed: $('speed'),
+          speedValue: $('speed-value'),
+          position: $('position'),
+          mode: $('mode'),
+          dir: $('dir'),
+          texts: $('texts'),
+          error: $('texts-error'),
+          snippet: $('snippet'),
+          copy: $('copy-btn'),
+          copyStatus: $('copy-status'),
+        };
+
+        // Line format for the textarea: "Text | https://..." becomes a link item.
+        var LINK_LINE = /^(.*\S)\s*\|\s*(https?:\/\/\S+)$/;
+
+        function toLine(item) {
+          return typeof item === 'string' ? item : item.text + ' | ' + item.href;
+        }
+
+        function parseLines(value) {
+          return value
+            .split('\n')
+            .map(function (line) {
+              return line.trim();
+            })
+            .filter(Boolean)
+            .map(function (line) {
+              var m = LINK_LINE.exec(line);
+              return m ? { text: m[1], href: m[2] } : line;
+            });
+        }
+
+        function formInput() {
+          return {
+            textArray: parseLines(els.texts.value),
+            stripBgColor: els.bg.value,
+            textColor: els.text.value,
+            textSpeed: Number(els.speed.value),
+            stripPosition: els.position.value,
+            stripMode: els.mode.value,
+            dir: els.dir.value,
+          };
+        }
+
+        // Snippet source. JSON.stringify gives valid double-quoted JS strings.
+        function snippetFor(o) {
+          var items = o.textArray.map(function (item) {
+            return typeof item === 'string'
+              ? '      ' + JSON.stringify(item)
+              : '      { text: ' + JSON.stringify(item.text) + ', href: ' + JSON.stringify(item.href) + ' }';
+          });
+          return [
+            '<script src="' + CDN_URL + '"><\/script>',
+            '<script>',
+            '  TextStrip.create({',
+            '    textArray: [',
+            items.join(',\n') + ',',
+            '    ],',
+            '    stripBgColor: ' + JSON.stringify(o.stripBgColor) + ',',
+            '    textColor: ' + JSON.stringify(o.textColor) + ',',
+            '    textSpeed: ' + o.textSpeed + ',',
+            '    stripPosition: ' + JSON.stringify(o.stripPosition) + ',',
+            '    stripMode: ' + JSON.stringify(o.stripMode) + ',',
+            '    dir: ' + JSON.stringify(o.dir) + ',',
+            '    exposeHeightVar: true,',
+            '  });',
+            '<\/script>',
+          ].join('\n');
+        }
+
+        var TOP_OPTIONS = {
+          textArray: TOP_TEXTS,
+          stripBgColor: '#111111',
+          textColor: '#ffffff',
+          textSpeed: 60,
+          stripPosition: 'top',
+          stripMode: 'fixed',
+          dir: 'auto',
+        };
+
+        var strip = TextStrip.create(Object.assign({ exposeHeightVar: true }, TOP_OPTIONS));
+
+        // Form fields start from the same options the strip was created with.
+        els.bg.value = TOP_OPTIONS.stripBgColor;
+        els.text.value = TOP_OPTIONS.textColor;
+        els.speed.value = String(TOP_OPTIONS.textSpeed);
+        els.speedValue.textContent = TOP_OPTIONS.textSpeed + ' px/s';
+        els.position.value = TOP_OPTIONS.stripPosition;
+        els.mode.value = TOP_OPTIONS.stripMode;
+        els.dir.value = TOP_OPTIONS.dir;
+        els.texts.value = TOP_TEXTS.map(toLine).join('\n');
+
+        // Options the strip is showing now. The snippet is built from these.
+        var applied = TOP_OPTIONS;
+        els.snippet.textContent = snippetFor(applied);
+
+        function applyChanges() {
+          els.speedValue.textContent = els.speed.value + ' px/s';
+          var next = formInput();
+          try {
+            strip.update(next);
+          } catch (err) {
+            els.error.hidden = false;
+            return;
+          }
+          els.error.hidden = true;
+          applied = next;
+          els.snippet.textContent = snippetFor(applied);
+        }
+
+        // Form-level input event: fires for color, range, select and textarea changes.
+        var form = document.getElementById('playground-form');
+        form.addEventListener('input', applyChanges);
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+        });
+
+        var statusTimer;
+
+        function setCopyStatus(message) {
+          els.copyStatus.textContent = message;
+          clearTimeout(statusTimer);
+          statusTimer = setTimeout(function () {
+            els.copyStatus.textContent = '';
+          }, 2500);
+        }
+
+        els.copy.addEventListener('click', function () {
+          var code = els.snippet.textContent;
+          if (!navigator.clipboard || !navigator.clipboard.writeText) {
+            setCopyStatus('Copy is not available here. Select the code and copy it.');
+            return;
+          }
+          navigator.clipboard.writeText(code).then(
+            function () {
+              setCopyStatus('Copied');
+            },
+            function () {
+              setCopyStatus('Copy failed. Select the code and copy it.');
+            }
+          );
+        });
+
+        TextStrip.create({
+          textArray: [
+            'شريط إعلانات متحرك لأي موقع بدون أي اعتماديات، ويعمل بسلاسة على الهاتف وسطح المكتب',
+            'يدعم الكتابة من اليمين إلى اليسار بالكامل، ويظهر النص العربي بترتيب صحيح دائمًا',
+            'شحن مجاني لجميع الطلبات فوق 50 دولار داخل الولايات المتحدة وخارجها',
+            'وصول جديد كل جمعة في متجرنا، تابعنا لتعرف أحدث المنتجات أولًا',
+            'أقل من 4 كيلوبايت بعد الضغط، بدون أي مكتبات إضافية تحمّلها الصفحة',
+            'يعمل داخل Shadow DOM دون أن يتأثر بتنسيقات الصفحة أو يؤثر فيها',
+          ],
+          stripBgColor: '#0e7490',
+          textColor: '#ffffff',
+          textSpeed: 60,
+          stripPosition: 'bottom',
+          stripMode: 'fixed',
+          dir: 'auto',
+          closable: true,
+          closeLabel: 'إغلاق',
+          pauseButton: true,
+          pauseLabel: 'إيقاف مؤقت',
+          playLabel: 'تشغيل',
+          ariaLabel: 'إعلانات',
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -3,22 +3,39 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
-const LIMIT_BYTES = 3072;
+// gzip level 9 budgets. The ESM build is what bundlers ship, the IIFE build is
+// the CDN bundle loaded with a script tag.
+const BUDGETS = [
+  { file: 'dist/index.js', limit: 3584 },
+  { file: 'dist/index.global.js', limit: 3840 },
+];
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const file = join(root, 'dist', 'index.global.js');
 
-if (!existsSync(file)) {
-  console.error(`text-strip: ${file} not found. Run "npm run build" first.`);
+const missing = BUDGETS.filter(({ file }) => !existsSync(join(root, file)));
+if (missing.length > 0) {
+  for (const { file } of missing) {
+    console.error(`text-strip: ${file} not found.`);
+  }
+  console.error('Run "npm run build" first.');
   process.exit(1);
 }
 
-const raw = readFileSync(file);
-const gzip = gzipSync(raw, { level: 9 });
+let failed = false;
 
-console.log(`dist/index.global.js: ${raw.length} bytes raw, ${gzip.length} bytes gzip (limit ${LIMIT_BYTES} bytes gzip)`);
+for (const { file, limit } of BUDGETS) {
+  const raw = readFileSync(join(root, file));
+  const gzip = gzipSync(raw, { level: 9 });
+  const over = gzip.length > limit;
 
-if (gzip.length > LIMIT_BYTES) {
-  console.error(`text-strip: gzip size ${gzip.length} bytes is over the ${LIMIT_BYTES} byte limit.`);
+  console.log(`${file}: ${raw.length} bytes raw, ${gzip.length} bytes gzip (limit ${limit} bytes gzip)${over ? ' OVER' : ''}`);
+
+  if (over) {
+    console.error(`text-strip: ${file} gzip size ${gzip.length} bytes is over the ${limit} byte limit.`);
+    failed = true;
+  }
+}
+
+if (failed) {
   process.exit(1);
 }

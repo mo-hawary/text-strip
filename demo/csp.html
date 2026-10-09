@@ -12,7 +12,11 @@
     <script src="/dist/index.global.js"></script>
     <script>
       window.csp_strip = TextStrip.create({
-        textArray: ['Strict CSP strip'],
+        textArray: [
+          'Strict CSP strip: this announcement is long enough to be wider than a desktop viewport, so the loop keeps running under the policy. ' +
+          'It repeats the same sentence on purpose so the track never waits for a second group. ' +
+          'Keeping the text longer than a desktop viewport keeps the loop running under the policy.',
+        ],
         stripBgColor: '#111111',
         textColor: '#ffffff',
       });

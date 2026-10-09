@@ -27,6 +27,15 @@ describe('resolveOptions defaults', () => {
     expect(o.gap).toBe(DEFAULTS.gap);
   });
 
+  it('defaults dir to auto, stripMode to fixed and the pause button to on', () => {
+    const o = resolveOptions({ textArray: ['A'] });
+    expect(o.dir).toBe('auto');
+    expect(o.stripMode).toBe('fixed');
+    expect(o.pauseButton).toBe(true);
+    expect(o.pauseLabel).toBe('Pause');
+    expect(o.playLabel).toBe('Play');
+  });
+
   it('accepts gap 0 and a separator of empty string', () => {
     const o = resolveOptions({ textArray: ['A'], gap: 0, separator: '' });
     expect(o.gap).toBe(0);
@@ -56,10 +65,47 @@ describe('resolveOptions validation', () => {
     ['numeric mountTarget', { mountTarget: 42 }],
     ['plain object mountTarget', { mountTarget: {} }],
     ['text node mountTarget', { mountTarget: document.createTextNode('x') }],
+    ['string textSpeed', { textSpeed: '60' }],
+    ['string height', { height: '40' }],
+    ['string gap', { gap: '32' }],
+    ['Infinity textSpeed', { textSpeed: Infinity }],
+    ['Infinity height', { height: Infinity }],
+    ['NaN gap', { gap: NaN }],
+    ['null item', { textArray: [null] }],
+    ['link item without href', { textArray: [{ text: 'Docs' }] }],
+    ['link item without text', { textArray: [{ href: 'https://example.com' }] }],
+    ['link item with blank text', { textArray: [{ text: '  ', href: 'https://example.com' }] }],
+    ['link item with numeric href', { textArray: [{ text: 'Docs', href: 42 }] }],
+    ['mixed list with one bad item', { textArray: ['Good', { text: 'Bad' }] }],
   ];
 
   it.each(invalid)('throws a TextStrip error for %s', (_name, extra) => {
     expect(() => resolveOptions(withTexts(extra))).toThrow(/^TextStrip:/);
+  });
+
+  it('names textArray as the invalid option for bad items', () => {
+    expect(() => resolveOptions({ textArray: [{ text: 'Docs' }] } as unknown as TextStripOptions)).toThrow(
+      /^TextStrip: invalid textArray$/,
+    );
+  });
+
+  it('accepts plain strings and link items with text and href together', () => {
+    const o = resolveOptions({
+      textArray: [
+        'Plain',
+        { text: 'Star', href: 'https://github.com/mo-hawary/text-strip' },
+        { text: 'Bad', href: 'javascript:alert(1)' },
+      ],
+    });
+    expect(o.textArray).toHaveLength(3);
+  });
+
+  it('accepts stripMode overlay and every dir value', () => {
+    expect(resolveOptions(withTexts({ stripMode: 'overlay' })).stripMode).toBe('overlay');
+    expect(resolveOptions(withTexts({ stripMode: 'static' })).stripMode).toBe('static');
+    for (const dir of ['ltr', 'rtl', 'auto']) {
+      expect(resolveOptions(withTexts({ dir })).dir).toBe(dir);
+    }
   });
 
   it('accepts null, a selector string or an element as mountTarget', () => {
@@ -82,6 +128,25 @@ describe('resolveOptions new options', () => {
     const o = resolveOptions({ textArray: ['A'], closeLabel: 'Fermer', exposeHeightVar: true });
     expect(o.closeLabel).toBe('Fermer');
     expect(o.exposeHeightVar).toBe(true);
+  });
+});
+
+describe('resolveOptions update merge', () => {
+  it('keeps the base options for keys that are not passed', () => {
+    const base = resolveOptions({ textArray: ['A', 'B'], textSpeed: 90, stripMode: 'overlay' });
+    const next = resolveOptions({ dir: 'rtl' }, base);
+    expect(next.textArray).toEqual(['A', 'B']);
+    expect(next.textSpeed).toBe(90);
+    expect(next.stripMode).toBe('overlay');
+    expect(next.dir).toBe('rtl');
+  });
+
+  it('validates a partial update with the same rules', () => {
+    const base = resolveOptions({ textArray: ['A'] });
+    expect(() => resolveOptions({ textSpeed: '60' } as unknown as Partial<TextStripOptions>, base)).toThrow(
+      /^TextStrip: invalid textSpeed$/,
+    );
+    expect(() => resolveOptions({ textArray: [] }, base)).toThrow(/^TextStrip: invalid textArray$/);
   });
 });
 

@@ -1,7 +1,7 @@
 {
   "name": "text-strip",
   "version": "0.1.0",
-  "description": "A drop-in, zero-dependency scrolling announcement strip for any website. LTR and RTL, Arabic-first.",
+  "description": "Drop-in scrolling announcement bar for any website: one config object, LTR and RTL (Arabic-first), Shadow DOM isolated, under 4 KB gzip, zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -23,31 +23,39 @@
     "./global": "./dist/index.global.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "sideEffects": false,
-  "engines": {
-    "node": ">=18"
-  },
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "size": "node scripts/size.mjs",
-    "demo": "node scripts/serve.mjs",
+    "demo": "npm run build && node scripts/serve.mjs",
     "check": "npm run typecheck && npm test && npm run build && npm run size",
-    "pretest:e2e": "npm run build"
+    "pretest:e2e": "npm run build",
+    "prepublishOnly": "npm run check"
   },
   "keywords": [
     "marquee",
     "ticker",
     "announcement-bar",
+    "announcement bar",
     "strip",
     "rtl",
     "arabic",
     "vanilla",
-    "banner"
+    "banner",
+    "scrolling-text",
+    "news-ticker",
+    "shopify",
+    "wordpress",
+    "bidi",
+    "shadow-dom",
+    "zero-dependency",
+    "web"
   ],
   "author": "Mohamed Adel <dev.elhawary@gmail.com>",
   "license": "MIT",
@@ -67,5 +75,9 @@
   "homepage": "https://github.com/mo-hawary/text-strip#readme",
   "bugs": {
     "url": "https://github.com/mo-hawary/text-strip/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }
