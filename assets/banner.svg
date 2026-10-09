@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" width="1280" height="320" role="img" aria-labelledby="t d">
+  <title id="t">text-strip</title>
+  <desc id="d">Drop-in scrolling announcement bar. LTR and RTL, Arabic-first.</desc>
+  <style>
+    .title { font: 700 76px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: #E6EDF3; }
+    .tagline { font: 400 22px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: #8B949E; }
+    .en { font: 700 18px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: #0D1117; text-anchor: middle; }
+    .ar { font: 700 18px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: #F59E0B; text-anchor: middle; }
+    .en-dot { font: 700 18px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: #0D1117; text-anchor: middle; }
+    .ar-dot { font: 700 18px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; fill: #F59E0B; text-anchor: middle; }
+    .track-en { animation: scroll-en-rtl 24s linear infinite; }
+    .track-ar { animation: scroll-ar-ltr 24s linear infinite; }
+    @keyframes scroll-en-rtl { from { transform: translateX(0); } to { transform: translateX(-2520px); } }
+    @keyframes scroll-ar-ltr { from { transform: translateX(-2520px); } to { transform: translateX(0); } }
+    @media (prefers-reduced-motion: reduce) {
+      .track-en, .track-ar { animation: none; }
+    }
+  </style>
+  <rect width="1280" height="320" fill="#0D1117"/>
+  <text class="title" x="640" y="118" text-anchor="middle">text-strip</text>
+  <text class="tagline" x="640" y="162" text-anchor="middle">Drop-in scrolling announcement bar. LTR and RTL, Arabic-first.</text>
+  <g>
+    <rect x="0" y="200" width="1280" height="44" fill="#F59E0B"/>
+    <g class="track-en">
+      <text class="en" x="190" y="228">Free shipping on orders over $50</text>
+      <text class="en-dot" x="400" y="228">•</text>
+      <text class="en" x="610" y="228">New arrivals every Friday</text>
+      <text class="en-dot" x="820" y="228">•</text>
+      <text class="en" x="1030" y="228">Zero dependencies</text>
+      <text class="en-dot" x="1240" y="228">•</text>
+      <text class="en" x="1450" y="228">Under 4 KB gzip</text>
+      <text class="en-dot" x="1660" y="228">•</text>
+      <text class="en" x="1870" y="228">Shadow DOM isolated</text>
+      <text class="en-dot" x="2080" y="228">•</text>
+      <text class="en" x="2290" y="228">Pause control for WCAG 2.2</text>
+      <text class="en-dot" x="2500" y="228">•</text>
+      <text class="en" x="2710" y="228">Free shipping on orders over $50</text>
+      <text class="en-dot" x="2920" y="228">•</text>
+      <text class="en" x="3130" y="228">New arrivals every Friday</text>
+      <text class="en-dot" x="3340" y="228">•</text>
+      <text class="en" x="3550" y="228">Zero dependencies</text>
+      <text class="en-dot" x="3760" y="228">•</text>
+      <text class="en" x="3970" y="228">Under 4 KB gzip</text>
+      <text class="en-dot" x="4180" y="228">•</text>
+      <text class="en" x="4390" y="228">Shadow DOM isolated</text>
+      <text class="en-dot" x="4600" y="228">•</text>
+      <text class="en" x="4810" y="228">Pause control for WCAG 2.2</text>
+      <text class="en-dot" x="5020" y="228">•</text>
+    </g>
+  </g>
+  <g>
+    <rect x="0.75" y="258.75" width="1278.5" height="42.5" fill="#161B22" stroke="#F59E0B" stroke-width="1.5"/>
+    <g class="track-ar">
+      <text class="ar" x="190" y="286">شحن مجاني لكل الطلبات</text>
+      <text class="ar-dot" x="400" y="286">•</text>
+      <text class="ar" x="610" y="286">يدعم العربية من اليمين إلى اليسار</text>
+      <text class="ar-dot" x="820" y="286">•</text>
+      <text class="ar" x="1030" y="286">أقل من 4 كيلوبايت</text>
+      <text class="ar-dot" x="1240" y="286">•</text>
+      <text class="ar" x="1450" y="286">زر إيقاف مؤقت للحركة</text>
+      <text class="ar-dot" x="1660" y="286">•</text>
+      <text class="ar" x="1870" y="286">يعمل داخل Shadow DOM</text>
+      <text class="ar-dot" x="2080" y="286">•</text>
+      <text class="ar" x="2290" y="286">وصول جديد كل جمعة</text>
+      <text class="ar-dot" x="2500" y="286">•</text>
+      <text class="ar" x="2710" y="286">شحن مجاني لكل الطلبات</text>
+      <text class="ar-dot" x="2920" y="286">•</text>
+      <text class="ar" x="3130" y="286">يدعم العربية من اليمين إلى اليسار</text>
+      <text class="ar-dot" x="3340" y="286">•</text>
+      <text class="ar" x="3550" y="286">أقل من 4 كيلوبايت</text>
+      <text class="ar-dot" x="3760" y="286">•</text>
+      <text class="ar" x="3970" y="286">زر إيقاف مؤقت للحركة</text>
+      <text class="ar-dot" x="4180" y="286">•</text>
+      <text class="ar" x="4390" y="286">يعمل داخل Shadow DOM</text>
+      <text class="ar-dot" x="4600" y="286">•</text>
+      <text class="ar" x="4810" y="286">وصول جديد كل جمعة</text>
+      <text class="ar-dot" x="5020" y="286">•</text>
+    </g>
+  </g>
+</svg>

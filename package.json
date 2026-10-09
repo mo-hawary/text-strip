@@ -57,7 +57,6 @@
     "zero-dependency",
     "web"
   ],
-  "author": "Mohamed Adel <dev.elhawary@gmail.com>",
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "^1.64.0",
@@ -79,5 +78,9 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "author": {
+    "name": "Mohamed ElHawary",
+    "url": "https://www.linkedin.com/in/mohawary"
   }
 }
