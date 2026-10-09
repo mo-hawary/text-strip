@@ -1,0 +1,331 @@
+# text-strip: full usage reference
+
+text-strip is a drop-in scrolling announcement bar for any website. You pass one config object, and it renders a looping strip of texts (a marquee or news ticker). It supports LTR and RTL (Arabic-first), renders inside a Shadow DOM so it never changes the host page styles, has zero runtime dependencies and is about 4 KB gzip. Package: `text-strip` on npm. Author: Mohamed ElHawary. License: MIT.
+
+## Install
+
+With npm:
+
+```sh
+npm install text-strip
+```
+
+```js
+import { createTextStrip } from 'text-strip';
+```
+
+CommonJS: `const { createTextStrip } = require('text-strip');`. `create` is also exported as an alias of `createTextStrip`.
+
+From a CDN, with no build step:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/text-strip@0.1/dist/index.global.js"></script>
+<script>
+  TextStrip.create({ textArray: ['Free shipping this week', 'شحن مجاني هذا الأسبوع'] });
+</script>
+```
+
+The CDN build exposes a `TextStrip` global with `TextStrip.create` and `TextStrip.createTextStrip`. Pin the major and minor version (`@0.1`) on live sites, so only patch releases reach the page. Load it in `<head>` if you like: the strip waits for `<body>` before it is inserted.
+
+## Minimal example
+
+```js
+import { createTextStrip } from 'text-strip';
+
+const strip = createTextStrip({
+  textArray: ['Free shipping on orders over $50', 'شحن مجاني للطلبات فوق 50 دولار'],
+  stripBgColor: '#111111',
+  textColor: '#ffffff',
+  closable: true,
+});
+```
+
+`textArray` is the only required option. Every other option has a default.
+
+## Options
+
+Invalid values throw an error that names the option, for example `TextStrip: invalid stripMode`.
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `textArray` | array of string or `{ text, href }` | required | Texts to loop. One or more, each with visible text. A `{ text, href }` item is a link. |
+| `stripBgColor` | string | `'#111111'` | Background color of the strip. |
+| `textColor` | string | `'#ffffff'` | Text color. |
+| `textSpeed` | number | `60` | Scroll speed in pixels per second. Must be greater than 0. |
+| `stripPosition` | `'top'` or `'bottom'` | `'top'` | Edge of the page where the strip sits. |
+| `stripMode` | `'fixed'`, `'overlay'` or `'static'` | `'fixed'` | How the strip sits on the page. See Layout modes. |
+| `mountTarget` | Element, CSS selector string or `null` | `null` (body) | Where the strip goes in fixed and static modes. A selector that matches nothing falls back to body. Ignored in overlay mode. |
+| `dir` | `'ltr'`, `'rtl'` or `'auto'` | `'auto'` | Text and scroll direction. `'auto'` follows the first strong character. |
+| `separator` | string | `'•'` | Character between items. Use `''` for none. |
+| `gap` | number | `32` | Space in pixels on each side of the separator. Must be 0 or more. |
+| `height` | number | `40` | Strip height in pixels. Must be greater than 0. |
+| `fontSize` | string | `'14px'` | Any CSS font-size value. |
+| `fontFamily` | string | `'inherit'` | Any CSS font-family value. The default inherits the page font. |
+| `pauseOnHover` | boolean | `true` | Pause scrolling while the pointer is over the strip. |
+| `respectReducedMotion` | boolean | `true` | Stop scrolling when the visitor prefers reduced motion. The strip becomes a horizontal scroll area. |
+| `closable` | boolean | `false` | Show a close button. Can be changed at runtime with `update()`. |
+| `rememberDismiss` | `false` or string | `false` | localStorage key that stores a dismissal after the visitor closes the strip. `false` turns this off. |
+| `closeLabel` | string | `'Close'` | Accessible label of the close button. |
+| `pauseButton` | boolean | `true` | Show the pause and play button while the texts scroll. |
+| `pauseLabel` | string | `'Pause'` | Accessible label of the pause button while the strip plays. |
+| `playLabel` | string | `'Play'` | Accessible label of the play button while the strip is paused. |
+| `exposeHeightVar` | boolean | `false` | Opt-in. Sets `--text-strip-height` on `:root` to the total height of the top fixed and overlay strips. |
+| `zIndex` | number | `9999` | Stacking order of the strip. Not used in static mode. |
+| `ariaLabel` | string | `'Announcements'` | Accessible name of the region. |
+| `onClose` | `() => void` | none | Called when the visitor closes the strip. Not called by `destroy()`. |
+
+Only these options are checked, and they throw `TextStrip: invalid <option>` when the value is unusable: `textArray` (non-empty array, every item valid), `textSpeed` (finite and greater than 0), `height` (finite and greater than 0), `gap` (finite and 0 or more), `stripPosition`, `stripMode`, `mountTarget` (null, a string, or an element), and `dir`.
+
+Exports: `createTextStrip`, `create`, `DEFAULTS` (the frozen default values) and the types `TextStripOptions`, `TextItem`, `StripPosition`, `StripMode`, `TextDir` and `TextStrip`.
+
+## Instance API
+
+`createTextStrip(options)` returns an object with these members:
+
+- `element`: the host element (`HTMLElement`), or `null` when nothing was created (no document, or a stored `rememberDismiss` dismissal). Check it before you use it: `strip.element?.setAttribute(...)`.
+- `update(partial)`: changes one or more options and re-renders. Options passed as `undefined` keep their current value. Invalid values throw. The loop keeps its progress, so it does not jump back to the start, also after a resize. `stripPosition`, `stripMode`, `dir`, `closable` and `pauseButton` can all change at runtime. Does nothing after `destroy()`.
+- `pause()`: pauses the scrolling and shows the play state.
+- `play()`: resumes the scrolling and shows the pause state. This overrides a visitor's pause, so do not call it on a timer.
+- `destroy()`: removes the strip, its spacer and its listeners, and removes `--text-strip-height` unless another strip still exposes it. Calling it again does nothing.
+
+```js
+const strip = createTextStrip({ textArray: ['Sale ends tonight', 'التخفيضات تنتهي الليلة'] });
+
+strip.update({ textArray: ['New collection is live', 'المجموعة الجديدة متاحة الآن'], textSpeed: 90 });
+strip.update({ stripPosition: 'bottom', closable: true });
+strip.pause();
+strip.play();
+strip.destroy();
+```
+
+When the visitor clicks close, the strip calls `destroy()`, stores the dismissal if `rememberDismiss` is set, and then calls `onClose`.
+
+## Layout modes
+
+Pick the mode with `stripMode`:
+
+- `'fixed'` (default): always visible. It reserves space in the page, so the page starts below the strip and the strip does not cover your header. The strip element is inserted as the first child of its target (the last child for `stripPosition: 'bottom'`), and a spacer takes its height in the flow.
+- `'overlay'`: always visible and floats over the page without taking space. The host is appended last to body with `display: contents`, so grid and flex body layouts are not affected. `mountTarget` is ignored.
+- `'static'`: part of the page flow. It takes space and scrolls away with the page. On sites with `body { display: grid }`, use `mountTarget` to put it in a container you control, or use overlay mode.
+
+Stacking: fixed and overlay strips on the same side stack automatically, in creation order. Static strips do not stack. Two copies of the library on one page (for example the CDN build and the npm package) share one registry, so stacking and `exposeHeightVar` still work.
+
+Spacer note: elements with `position: fixed` or `position: sticky` on your site are not moved by the spacer.
+
+Fit: when all texts fit, they are shown centered and still, and the pause button is hidden.
+
+Mounting: a script in `<head>` may run before body exists. The strip waits for `DOMContentLoaded`, then inserts itself.
+
+### Sticky header with exposeHeightVar
+
+Set `exposeHeightVar: true` on the strip, then offset your sticky header with the variable:
+
+```js
+createTextStrip({
+  textArray: ['Free shipping on orders over $50', 'شحن مجاني للطلبات فوق 50 دولار'],
+  exposeHeightVar: true,
+});
+```
+
+```css
+header.sticky {
+  top: var(--text-strip-height, 0);
+}
+```
+
+The variable covers only top strips in fixed and overlay mode. It is removed when no strip uses the option.
+
+## RTL and dir
+
+- `dir: 'auto'` (default): reads the first strong letter of the texts, in order. Arabic and Hebrew start the strip right to left, and a Latin letter starts it left to right. Digits, emoji and punctuation do not decide the direction.
+- `dir: 'rtl'`: scrolls text from left to right, so Arabic reads naturally as it enters.
+- `dir: 'ltr'`: forces left to right.
+- Bidi isolation: each item is isolated, so mixed Arabic and English items keep the word order of each item.
+
+## Link items and allowed protocols
+
+```js
+createTextStrip({
+  textArray: [
+    { text: 'Shipping policy', href: 'https://example.com/shipping' },
+    { text: 'Call us: 0100 000 0000', href: 'tel:+201000000000' },
+    'شحن مجاني للطلبات فوق 50 دولار',
+  ],
+});
+```
+
+Only `http:`, `https:`, `mailto:` and `tel:` URLs become links. Any other scheme, such as `javascript:` or `data:`, renders as plain text and is never linked. An empty or whitespace-only href is not a link. Relative URLs resolve against the page base URL.
+
+## Accessibility
+
+- The strip is a `role="region"` labeled by `ariaLabel`.
+- The pause button (`pauseButton`, on by default) covers WCAG 2.2.2 (Pause, Stop, Hide) for moving content. Its label switches between `pauseLabel` and `playLabel`.
+- The pause and close buttons are native `<button>` elements. Tab, Enter and Space work, and they show a focus outline.
+- `ariaLabel`, `pauseLabel`, `playLabel` and `closeLabel` are plain text options, so you can translate them.
+- Only the first copy of the texts is read by screen readers. The repeated copies used for the loop are `aria-hidden="true"` and their links have `tabindex="-1"`, so keyboard users reach each link once.
+- Scrolling pauses on hover when `pauseOnHover` is true, and always while keyboard focus is inside the moving text. The buttons never move with the text.
+- Reduced motion: with `prefers-reduced-motion: reduce` and `respectReducedMotion` on, scrolling stops, the repeated copies and the pause button are hidden, and the strip becomes a focusable horizontal scroll area.
+
+## Isolation, CSP and Trusted Types
+
+text-strip never changes your page styles, and your styles cannot break it:
+
+- It renders inside a Shadow DOM. Its CSS does not leak out, and page selectors do not reach in.
+- The host is a `<text-strip>` element with `all: initial !important`, which beats page rules aimed at the host.
+- The host's `::before` and `::after` are neutralized, so page rules cannot add content to the strip.
+- No CSS custom properties are read inside the shadow tree. Only the page font-family is inherited (set `fontFamily` to override).
+- Colors and sizes are set through the CSSOM. The strip never changes the styles or attributes of `<html>`, `<body>` or your elements. The only exception is the opt-in `exposeHeightVar`, which sets one variable on `:root`.
+- It works under strict CSP such as `style-src 'self'`, using constructable stylesheets. Browsers without them (Safari before 16.4) fall back to an inline `<style>` element. A strict policy blocks that element unless `'unsafe-inline'` is allowed for styles, and the fallback has no nonce.
+- It works with Trusted Types: text is set with `textContent`, never `innerHTML`.
+
+Browser support: modern evergreen browsers (Chrome, Edge, Firefox, Safari). The strip uses Shadow DOM, constructable stylesheets (with the fallback above) and ResizeObserver.
+
+## Framework recipes
+
+Use the same pattern everywhere: create the strip when the page or component mounts, and call `destroy()` when it unmounts.
+
+### React
+
+```jsx
+import { useEffect } from 'react';
+import { createTextStrip } from 'text-strip';
+
+export function AnnouncementStrip() {
+  useEffect(() => {
+    const strip = createTextStrip({ textArray: ['Free shipping this week', 'شحن مجاني هذا الأسبوع'] });
+    return () => strip.destroy();
+  }, []);
+
+  return null;
+}
+```
+
+React Strict Mode runs effects twice in development. This is fine with the cleanup above: the first instance is destroyed before the second one is created, so only one strip stays on the page.
+
+### Next.js (App Router)
+
+The strip needs the browser, so put it in a client component and render that from the layout:
+
+```jsx
+// app/announcement-strip.jsx
+'use client';
+
+import { useEffect } from 'react';
+import { createTextStrip } from 'text-strip';
+
+export default function AnnouncementStrip() {
+  useEffect(() => {
+    const strip = createTextStrip({ textArray: ['Free shipping this week', 'شحن مجاني هذا الأسبوع'] });
+    return () => strip.destroy();
+  }, []);
+
+  return null;
+}
+```
+
+```jsx
+// app/layout.jsx
+import AnnouncementStrip from './announcement-strip';
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <AnnouncementStrip />
+        {children}
+      </body>
+    </html>
+  );
+}
+```
+
+### Vue
+
+```vue
+<script setup>
+import { onBeforeUnmount, onMounted } from 'vue';
+import { createTextStrip } from 'text-strip';
+
+let strip;
+
+onMounted(() => {
+  strip = createTextStrip({ textArray: ['Free shipping this week', 'شحن مجاني هذا الأسبوع'] });
+});
+
+onBeforeUnmount(() => {
+  strip?.destroy();
+});
+</script>
+```
+
+### Svelte
+
+```svelte
+<script>
+  import { onMount } from 'svelte';
+  import { createTextStrip } from 'text-strip';
+
+  onMount(() => {
+    const strip = createTextStrip({ textArray: ['Free shipping this week', 'شحن مجاني هذا الأسبوع'] });
+    return () => strip.destroy();
+  });
+</script>
+```
+
+### Shopify
+
+In the admin, open Online Store, then Themes, then Edit code. In `layout/theme.liquid`, paste this directly before `</body>`:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/text-strip@0.1/dist/index.global.js"></script>
+<script>
+  TextStrip.create({
+    textArray: ['Free shipping on orders over $50', 'شحن مجاني للطلبات فوق 50 دولار'],
+    stripPosition: 'top',
+  });
+</script>
+```
+
+### WordPress
+
+Option 1: add a Custom HTML block with the CDN snippet. Option 2 (recommended for a site-wide strip): use a snippet plugin such as WPCode, create an HTML snippet with the same code, and set its location to site-wide footer.
+
+### Plain HTML
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/text-strip@0.1/dist/index.global.js"></script>
+<script>
+  TextStrip.create({ textArray: ['Free shipping this week', 'شحن مجاني هذا الأسبوع'] });
+</script>
+```
+
+## SSR notes
+
+- `createTextStrip` validates the options even when there is no document, so a server render reports a bad config.
+- With no document (server render), it returns an inert instance: `element` is `null` and every method does nothing. Calling it during server rendering does not break the page.
+- Still, create the strip in an effect or `onMounted` (client only), as the recipes show, so the strip is created once in the browser.
+
+## Known limits
+
+- Structure: fixed and static modes add one element to the target. Structural selectors on that container (`:first-child`, `:nth-child`) may match differently.
+- Overlay: adds one element as the last child of body. `body > :last-child` and `:nth-last-child()` can match differently.
+- Transforms: a strip inside a transformed ancestor (for example a `mountTarget` with `transform`) cannot be fixed to the viewport. Pick a target without a transform.
+- Stored dismissal: after a visitor closes a strip with `rememberDismiss`, later calls with the same key return an inert instance with `element: null`:
+
+```js
+const strip = createTextStrip({ textArray: ['Sale ends tonight'], closable: true, rememberDismiss: 'sale-strip' });
+strip.element?.setAttribute('data-campaign', 'summer');
+```
+
+- Runtime `rememberDismiss`: changing it with `update()` does not hide a strip that is already visible.
+- Focus on links: keyboard focus on a link that scrolled out of view does not scroll it back into view while the loop runs. The loop pauses on focus. With reduced motion the strip is a scroll area, so the link can be reached.
+
+## Common mistakes
+
+- Forgetting cleanup. Without `destroy()` on unmount (React, Vue, Svelte, Next.js), strips pile up on client-side navigation. Return or call `destroy()` as the recipes show.
+- Calling `play()` on a timer or in a loop. It overrides the visitor's pause. Call it only when the visitor asks to resume.
+- Assuming `strip.element` exists. After a remembered dismissal it is `null`. Use `strip.element?.`.
+- Empty `textArray`. It must be a non-empty array. Each string must contain visible text, and each link item needs non-blank `text` and a string `href`.
+- Numbers as strings. `textSpeed`, `height` and `gap` must be real numbers, for example `textSpeed: 60`, not `'60'`. `textSpeed` and `height` must be greater than 0, and `gap` must be 0 or more.
+- Setting `exposeHeightVar` without a CSS rule that uses `--text-strip-height`. The option only publishes the variable, so your header still needs the `top` rule.
+- Expecting `onClose` on `destroy()`. It runs only when the visitor clicks close.

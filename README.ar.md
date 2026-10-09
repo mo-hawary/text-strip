@@ -228,6 +228,12 @@ createTextStrip({
 - `mount.ts`: وضع العنصر المضيف في الصفحة.
 - `strip.ts`: `createTextStrip`، المنسّق الذي يربط الوحدات ببعضها.
 
+## استخدام text-strip مع وكلاء الذكاء الاصطناعي
+
+- أعطِ وكيلك هذا الرابط ليتعلّم كيف يستخدم text-strip: https://mo-hawary.github.io/text-strip/llms.txt. وللحصول على المرجع الكامل في ملف واحد، استخدم https://mo-hawary.github.io/text-strip/llms-full.txt.
+- ثبّت مهارة الوكيل بالأمر `npx skills add mo-hawary/text-strip`، وتعمل مع Claude Code وCodex وCursor وCopilot وغيرها. وإذا كان GitHub CLI يدعمها، فالأمر `gh skill install mo-hawary/text-strip` يؤدي الغرض نفسه.
+- المساهمون: يقرأ الوكلاء الذين يعملون على المشروع الملف [AGENTS.md](AGENTS.md).
+
 ## المساهمة والأمان والرخصة
 
 - **المساهمة:** انظر [CONTRIBUTING.md](CONTRIBUTING.md) و[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). لتشغيل العرض محلياً استخدم `npm run demo`.

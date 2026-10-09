@@ -12,6 +12,10 @@ on:
     paths:
       - 'src/**'
       - 'site/**'
+      - 'skills/**'
+      - 'AGENTS.md'
+      - 'llms.txt'
+      - 'llms-full.txt'
       - 'package.json'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
@@ -46,6 +50,10 @@ jobs:
           mkdir -p _site
           cp -R site/. _site/
           cp -R dist _site/dist
+          cp llms.txt llms-full.txt _site/
+          cp site/index.md _site/index.md
+          mkdir -p _site/skills
+          cp -R skills/. _site/skills/
 
       - uses: actions/configure-pages@v5
 

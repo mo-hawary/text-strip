@@ -24,8 +24,19 @@
   },
   "files": [
     "dist",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "llms.txt",
+    "llms-full.txt",
+    "skills"
   ],
+  "agents": {
+    "skills": [
+      {
+        "name": "text-strip",
+        "path": "./skills/text-strip"
+      }
+    ]
+  },
   "sideEffects": false,
   "scripts": {
     "build": "tsup",
@@ -33,8 +44,9 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "size": "node scripts/size.mjs",
+    "check:agents": "node scripts/check-agent-docs.mjs",
     "demo": "npm run build && node scripts/serve.mjs",
-    "check": "npm run typecheck && npm test && npm run build && npm run size",
+    "check": "npm run typecheck && npm test && npm run build && npm run size && npm run check:agents",
     "pretest:e2e": "npm run build",
     "prepublishOnly": "npm run check"
   },

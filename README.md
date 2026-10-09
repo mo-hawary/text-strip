@@ -420,6 +420,12 @@ The library source is in `src/`. Each module has one job:
 - `mount.ts`: placement of the host on the page.
 - `strip.ts`: `createTextStrip`, the orchestrator that wires the modules together.
 
+## Using text-strip with AI agents
+
+- Give your agent this link, and it learns how to use text-strip: https://mo-hawary.github.io/text-strip/llms.txt. For the full reference in one file, use https://mo-hawary.github.io/text-strip/llms-full.txt.
+- Install the agent skill with `npx skills add mo-hawary/text-strip`. It works with Claude Code, Codex, Cursor, Copilot and other agents. If your GitHub CLI supports it, `gh skill install mo-hawary/text-strip` does the same.
+- Contributors: agents that work on this repo read [AGENTS.md](./AGENTS.md).
+
 ## Contributing
 
 Bug reports, feature ideas and pull requests are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the workflow and [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) for community expectations.

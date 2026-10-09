@@ -1,0 +1,28 @@
+# text-strip
+
+> Drop-in scrolling announcement bar for any website: one config object, LTR and RTL (Arabic-first), Shadow DOM isolated, about 4 KB gzip, zero dependencies.
+
+- Install with `npm install text-strip`, or load the CDN build `https://cdn.jsdelivr.net/npm/text-strip@0.1/dist/index.global.js` (global `TextStrip.create`).
+- Usage is one call: `createTextStrip({ textArray: ['Free shipping', 'شحن مجاني'] })`. It returns `element`, `update`, `pause`, `play` and `destroy`.
+- Zero runtime dependencies. Safe in server rendering: with no document it returns an inert instance.
+- RTL: `dir: 'auto'` (default) follows the first strong character, so Arabic text starts right to left.
+- Isolation: renders in a Shadow DOM, never changes host page styles, inserts text with `textContent` only (CSP and Trusted Types safe).
+
+## Docs
+
+- [llms-full.txt](https://mo-hawary.github.io/text-strip/llms-full.txt): complete usage reference in one file (options, API, layout, RTL, accessibility, framework recipes).
+- [README](https://raw.githubusercontent.com/mo-hawary/text-strip/main/README.md): project README with the same facts, the demo and the project structure.
+- [Agent skill](https://raw.githubusercontent.com/mo-hawary/text-strip/main/skills/text-strip/SKILL.md): step-by-step workflow for adding a strip to a site, with examples and a stripMode decision table.
+- [API reference](https://raw.githubusercontent.com/mo-hawary/text-strip/main/skills/text-strip/references/api.md): every option with its type and default, the instance methods and edge cases.
+- [Recipes](https://raw.githubusercontent.com/mo-hawary/text-strip/main/skills/text-strip/references/recipes.md): Shopify, WordPress, React, Next.js, Vue, Svelte and plain HTML.
+
+## Types
+
+- [TypeScript declarations](https://unpkg.com/text-strip/dist/index.d.ts): exported types `TextStripOptions`, `TextItem`, `StripMode`, `StripPosition`, `TextDir` and `TextStrip`.
+
+## Optional
+
+- [README (Arabic)](https://raw.githubusercontent.com/mo-hawary/text-strip/main/README.ar.md): the Arabic project README.
+- [CHANGELOG](https://raw.githubusercontent.com/mo-hawary/text-strip/main/CHANGELOG.md): release history and public behavior changes.
+- [CONTRIBUTING](https://raw.githubusercontent.com/mo-hawary/text-strip/main/CONTRIBUTING.md): development setup, scripts and hard rules for contributors.
+- [AGENTS.md](https://raw.githubusercontent.com/mo-hawary/text-strip/main/AGENTS.md): rules for AI agents that work on the repo itself.
