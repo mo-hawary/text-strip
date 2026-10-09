@@ -198,6 +198,8 @@ createTextStrip({ textArray: ['Free returns'], mountTarget: '#site-header' });
 
 If the selector matches nothing, the strip goes into body.
 
+In a flex row, give the mount target a width (for example `flex: 1`), because the strip has no intrinsic width of its own.
+
 ## Remembered dismissal
 
 ```js

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-09
+
+### Fixed
+
+- A static strip inside a grid or flex item no longer expands its container to the full text width (which made it stop scrolling). The scroll wrapper now uses `contain: inline-size`.
+
 ## [0.1.0] - 2026-10-09
 
 First public release.
@@ -38,5 +44,6 @@ First public release.
 - Bundle size about 4 KB gzip (ESM 3.8 KB, CDN 4.0 KB), enforced by `npm run size` for both the ESM and the CDN build.
 - Source split into small single-purpose modules with comments for readability.
 
-[Unreleased]: https://github.com/mo-hawary/text-strip/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/mo-hawary/text-strip/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/mo-hawary/text-strip/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/mo-hawary/text-strip/releases/tag/v0.1.0

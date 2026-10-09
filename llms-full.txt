@@ -310,6 +310,7 @@ Option 1: add a Custom HTML block with the CDN snippet. Option 2 (recommended fo
 ## Known limits
 
 - Structure: fixed and static modes add one element to the target. Structural selectors on that container (`:first-child`, `:nth-child`) may match differently.
+- Flex rows: in a flex row, give the mount target a width (for example `flex: 1`), because the strip has no intrinsic width of its own.
 - Overlay: adds one element as the last child of body. `body > :last-child` and `:nth-last-child()` can match differently.
 - Transforms: a strip inside a transformed ancestor (for example a `mountTarget` with `transform`) cannot be fixed to the viewport. Pick a target without a transform.
 - Stored dismissal: after a visitor closes a strip with `rememberDismiss`, later calls with the same key return an inert instance with `element: null`:

@@ -395,6 +395,7 @@ Modern evergreen browsers: Chrome, Edge, Firefox and Safari. The strip uses Shad
 ## Known limits
 
 - **Structure:** fixed and static modes add one element to the target. Structural selectors on that container (such as `:first-child` or `:nth-child`) may match differently.
+- **Flex rows:** in a flex row, give the mount target a width (for example `flex: 1`), because the strip has no intrinsic width of its own.
 - **Overlay:** overlay mode adds one element as the last child of `<body>`.
 - **Transforms:** a strip inside a transformed ancestor (for example a `mountTarget` with `transform` set) cannot be fixed to the viewport. This is a CSS limitation: `position: fixed` is relative to the transformed ancestor. Pick a target without a transform.
 - **Stored dismissal:** after a visitor closes a strip with `rememberDismiss`, later `createTextStrip` calls with the same key return an inert instance whose `element` is `null`. Integrator code must not assume that `strip.element` exists:

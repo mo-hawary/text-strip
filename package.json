@@ -1,6 +1,6 @@
 {
   "name": "text-strip",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Drop-in scrolling announcement bar for any website: one config object, LTR and RTL (Arabic-first), Shadow DOM isolated, about 4 KB gzip, zero dependencies.",
   "type": "module",
   "main": "./dist/index.cjs",

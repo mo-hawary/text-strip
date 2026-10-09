@@ -13,7 +13,7 @@ export const styles =
   // overflow:clip keeps the scroller from becoming a scroll container, so focusing a link cannot scroll the box
   // and fight the loop. overflow:hidden is the fallback for browsers without clip.
   '.b{display:flex}' +
-  '.w{flex:1;min-width:0;display:flex;overflow:hidden;overflow:clip}' +
+  '.w{flex:1;min-width:0;display:flex;overflow:hidden;overflow:clip;contain:inline-size}' +
   '.f{position:fixed;left:0;right:0}' +
   // Track and animation: the track holds two identical sets and moves by half its width, then restarts.
   // In RTL the same loop runs the other way (keyframes r).

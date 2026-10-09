@@ -1045,6 +1045,59 @@ test.describe('static strip and sticky header', () => {
   });
 });
 
+test.describe('static strip in a grid or flex item', () => {
+  // The strip sits in a slot with no width of its own. Its text is far wider than any of these slots.
+  const mountStatic = (page: Page, body: string) =>
+    page.setContent(
+      inlinePage(
+        body +
+          `<script>${bundle}</script>` +
+          `<script>TextStrip.create({ textArray: [${JSON.stringify(LONG)}], stripMode: 'static', mountTarget: '#slot' });</script>`,
+      ),
+    );
+
+  const readStrip = (page: Page) =>
+    page.evaluate(() => {
+      const host = document.querySelector('[data-text-strip]') as HTMLElement;
+      const shadow = host.shadowRoot!;
+      const track = shadow.querySelector('.t') as HTMLElement;
+      const transform = getComputedStyle(track).transform;
+      return {
+        hostWidth: host.getBoundingClientRect().width,
+        slotWidth: (document.getElementById('slot') as HTMLElement).getBoundingClientRect().width,
+        barWidth: (shadow.querySelector('.b') as HTMLElement).clientWidth,
+        trackWidth: track.getBoundingClientRect().width,
+        fit: (shadow.querySelector('.b') as HTMLElement).classList.contains('fit'),
+        x: transform === 'none' ? 0 : new DOMMatrixReadOnly(transform).m41,
+      };
+    });
+
+  test('in a grid column the host takes the column width, is not fit and keeps moving', async ({ page }) => {
+    await mountStatic(page, `<div style="display:grid;grid-template-columns:1fr;width:900px"><div id="slot"></div></div>`);
+    await page.locator('[data-text-strip]').waitFor();
+    const first = await readStrip(page);
+    expect(Math.abs(first.hostWidth - 900)).toBeLessThanOrEqual(2);
+    expect(first.fit).toBe(false);
+
+    await expect.poll(async () => (await readStrip(page)).x).not.toBe(first.x);
+  });
+
+  test('in a flex row a slot with flex: 1 sets the host width and the strip scrolls', async ({ page }) => {
+    await mountStatic(
+      page,
+      `<div style="display:flex;align-items:center;width:900px">` +
+        `<span style="width:120px">Logo</span><div id="slot" style="flex:1"></div></div>`,
+    );
+    await page.locator('[data-text-strip]').waitFor();
+    const first = await readStrip(page);
+    expect(Math.abs(first.slotWidth - 780)).toBeLessThanOrEqual(2);
+    expect(Math.abs(first.hostWidth - first.slotWidth)).toBeLessThanOrEqual(1);
+    expect(first.trackWidth).toBeGreaterThan(first.barWidth);
+
+    await expect.poll(async () => (await readStrip(page)).x).not.toBe(first.x);
+  });
+});
+
 test.describe('close and dismissal', () => {
   test('closing the bottom strip removes it and stays hidden after reload', async ({ page }) => {
     await open(page);

@@ -688,6 +688,11 @@ describe('inline styles and isolation', () => {
     expect(selectors.sort()).toEqual(['.paused .t', '.ph .t:hover', '.t:focus-within']);
   });
 
+  // Without contain, a static strip reports its full text width to a grid or flex parent, so the parent grows.
+  it('keeps the scroll wrapper from contributing its text width to a grid or flex parent', () => {
+    expect(styles).toMatch(/\.w\{[^}]*contain:inline-size/);
+  });
+
   it('neutralizes the host pseudo-elements so page ::before and ::after cannot add boxes', () => {
     expect(styles).toMatch(/:host::before,:host::after\{content:none!important;display:none!important\}/);
   });
