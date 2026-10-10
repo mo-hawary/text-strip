@@ -9,7 +9,7 @@ metadata:
 
 # text-strip
 
-text-strip renders a looping strip of texts. It is one call, has zero runtime dependencies, renders inside a Shadow DOM (it never changes host page styles), and supports LTR and RTL. Full option list: [references/api.md](references/api.md). Framework and platform snippets: [references/recipes.md](references/recipes.md).
+text-strip renders a looping strip of texts. It is one call, has zero runtime dependencies, renders inside a Shadow DOM (it never changes host page styles), and supports LTR and RTL. The canonical documentation page is https://mohawary.com/open-source/text-strip. Full option list: [references/api.md](references/api.md). Framework and platform snippets: [references/recipes.md](references/recipes.md).
 
 ## When to use
 

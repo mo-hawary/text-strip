@@ -4,6 +4,8 @@ text-strip is a drop-in scrolling announcement bar for any website. It takes one
 
 Live showcase: https://mo-hawary.github.io/text-strip/
 
+Canonical documentation: https://mohawary.com/open-source/text-strip
+
 ## Install
 
 With npm, for a bundler project:
