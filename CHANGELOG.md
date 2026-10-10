@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Docs: canonical homepage moved to https://mohawary.com/open-source/text-strip; comparison section; Arabic translation.
+
 ## [0.1.1] - 2026-10-09
 
 ### Fixed

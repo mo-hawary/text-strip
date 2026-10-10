@@ -10,6 +10,8 @@
 
 ## Docs
 
+- [text-strip documentation](https://mohawary.com/open-source/text-strip): canonical guide
+- [text-strip documentation (Markdown)](https://mohawary.com/open-source/text-strip.md): the same guide as plain markdown
 - [llms-full.txt](https://mo-hawary.github.io/text-strip/llms-full.txt): complete usage reference in one file (options, API, layout, RTL, accessibility, framework recipes).
 - [README](https://raw.githubusercontent.com/mo-hawary/text-strip/main/README.md): project README with the same facts, the demo and the project structure.
 - [Agent skill](https://raw.githubusercontent.com/mo-hawary/text-strip/main/skills/text-strip/SKILL.md): step-by-step workflow for adding a strip to a site, with examples and a stripMode decision table.

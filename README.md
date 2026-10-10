@@ -18,6 +18,7 @@
 </p>
 
 <p align="center">
+  <a href="https://mohawary.com/open-source/text-strip"><strong>Homepage</strong></a> &nbsp;·&nbsp;
   <a href="https://mo-hawary.github.io/text-strip/"><strong>Live demo</strong></a> &nbsp;·&nbsp;
   <a href="https://www.npmjs.com/package/text-strip"><strong>npm</strong></a> &nbsp;·&nbsp;
   <a href="README.ar.md"><strong>العربية</strong></a> &nbsp;·&nbsp;
@@ -392,6 +393,29 @@ text-strip never changes your page styles, and your page styles cannot break it:
 
 Modern evergreen browsers: Chrome, Edge, Firefox and Safari. The strip uses Shadow DOM, constructable stylesheets (with a `<style>` fallback for Safari before 16.4) and `ResizeObserver`.
 
+## How it compares
+
+No other library we found offers this exact combination. text-strip is deliberately specialized: a drop-in scrolling announcement bar that is isolated in Shadow DOM, Arabic-first with automatic direction and per-item bidi isolation, accessible by default (pause button, reduced motion, focus pause), closable with remembered dismissal, available in fixed, overlay and static modes with an opt-in height variable for sticky headers, plain text only with safe links, zero dependencies at about 4 KB, and the same API from npm, a CDN script tag, Shopify, WordPress, React or Vue.
+
+| Library | What it is | Size (gzip) | Shadow DOM | RTL | Pause and motion | Close and remember | Best for |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **text-strip** | Announcement strip | 4.0 KB | Yes | `dir: 'auto'` plus per-item bidi isolation | Pause button, hover and focus pause, reduced motion | Yes | Arabic-first announcement bars that must not touch your CSS |
+| [marquee-content](https://www.npmjs.com/package/marquee-content) | Marquee web component | 6.2 KB | Yes | `direction` attribute (rtl or ltr) | Pauses on hover (opt-in), focus, out of viewport, reduced motion | No | General marquees styled with CSS variables |
+| [@magic-spells/scrolling-content](https://www.npmjs.com/package/@magic-spells/scrolling-content) | Infinite scrolling web component | 3.6 KB (README states about 2.5 kB) | No | Not documented | Hover pause, drag to scrub, reduced motion | No | Logo walls and tickers with drag interaction |
+| [infinite-text-scroller](https://www.npmjs.com/package/infinite-text-scroller) | Text scroller library | 9.4 KB | No | Yes | WCAG 2.2.2 pause on hover and focus, Space key toggle | No | Preset-driven tickers (news, currency, stock, announcement fade) |
+| [AcmeTicker](https://www.npmjs.com/package/acmeticker) | News ticker library | 5.0 KB | No | Automatic RTL mirroring | Pause controls, several engines (vertical, horizontal, marquee, typewriter) | No | Classic news tickers with multiple animation modes |
+| [@zachleat/announcement-banner](https://www.npmjs.com/package/@zachleat/announcement-banner) | Static dismissible banner web component | 0.4 KB | No | Not applicable | No motion | Yes (localStorage) | A simple non-scrolling banner with no layout shift |
+
+### Which one to pick
+
+- Choose text-strip for an Arabic-first or mixed Arabic and English scrolling announcement bar that stays isolated from your styles and is accessible out of the box.
+- For a general-purpose marquee (logos or rich markup), [marquee-content](https://www.npmjs.com/package/marquee-content) and [@magic-spells/scrolling-content](https://www.npmjs.com/package/@magic-spells/scrolling-content) are strong, smaller-scope choices.
+- For a non-scrolling dismissible bar, [@zachleat/announcement-banner](https://www.npmjs.com/package/@zachleat/announcement-banner) is tiny, battle-tested and avoids layout shift.
+
+**A note on content:** most marquee components loop your own markup, which is flexible but leaves sanitizing to you. text-strip renders plain text only, and link items accept only `http`, `https`, `mailto` and `tel` URLs.
+
+*Comparison checked on 2026-10-10 against each package's latest npm release. Sizes are gzip -9 of each package's main browser bundle; projects change, so check their pages for the latest.*
+
 ## Known limits
 
 - **Structure:** fixed and static modes add one element to the target. Structural selectors on that container (such as `:first-child` or `:nth-child`) may match differently.
@@ -450,6 +474,8 @@ To report a vulnerability, follow the steps in [SECURITY.md](./SECURITY.md). Ple
 
 Created and maintained by **Mohamed ElHawary**. For questions, collaboration or hiring, reach out on [LinkedIn](https://www.linkedin.com/in/mohawary). Bugs and feature requests go to [GitHub issues](https://github.com/mo-hawary/text-strip/issues); security reports go through [SECURITY.md](SECURITY.md).
 
+The project homepage is [mohawary.com/open-source/text-strip](https://mohawary.com/open-source/text-strip).
+
 ## License
 
 MIT. See [LICENSE](./LICENSE). Release notes for each version are in [CHANGELOG.md](./CHANGELOG.md).
@@ -457,7 +483,7 @@ MIT. See [LICENSE](./LICENSE). Release notes for each version are in [CHANGELOG.
 ---
 
 <p align="center">
-  Built by <a href="https://mohawary.com"><strong>Mohamed ElHawary</strong></a>
+  Built by <a href="https://mohawary.com"><strong>Mohamed ElHawary</strong></a> &nbsp;·&nbsp; <a href="https://mohawary.com/open-source/text-strip"><strong>text-strip homepage</strong></a>
 </p>
 
 <p align="center">

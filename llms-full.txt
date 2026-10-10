@@ -2,6 +2,8 @@
 
 text-strip is a drop-in scrolling announcement bar for any website. You pass one config object, and it renders a looping strip of texts (a marquee or news ticker). It supports LTR and RTL (Arabic-first), renders inside a Shadow DOM so it never changes the host page styles, has zero runtime dependencies and is about 4 KB gzip. Package: `text-strip` on npm. Author: Mohamed ElHawary. License: MIT.
 
+The canonical documentation page is https://mohawary.com/open-source/text-strip (Markdown version: https://mohawary.com/open-source/text-strip.md).
+
 ## Install
 
 With npm:

@@ -18,6 +18,7 @@
 </p>
 
 <p align="center">
+  <a href="https://mohawary.com/open-source/text-strip"><strong>الصفحة الرئيسية</strong></a> &nbsp;·&nbsp;
   <a href="https://mo-hawary.github.io/text-strip/"><strong>العرض المباشر</strong></a> &nbsp;·&nbsp;
   <a href="https://www.npmjs.com/package/text-strip"><strong>npm</strong></a> &nbsp;·&nbsp;
   <a href="README.md"><strong>English</strong></a> &nbsp;·&nbsp;
@@ -205,6 +206,29 @@ createTextStrip({
 - يعمل الشريط داخل Shadow DOM، فلا تتسرب أنماطه إلى الصفحة ولا تتأثر بأنماطها. ويعمل مع سياسة CSP الصارمة ومع Trusted Types، لأنه يستخدم `textContent` ولا يستخدم `innerHTML` أبداً.
 - ملاحظة للمطوّرين: `strip.play()` يلغي إيقاف الزائر المؤقت. لا تستدعِها بمؤقت زمني، واحترم اختيار الزائر.
 
+## المقارنة مع المكتبات الأخرى
+
+لم نجد مكتبة أخرى تقدم هذا المزيج تحديداً. text-strip متخصص عن قصد: شريط إعلانات متحرك يُضاف مباشرة، ومعزول داخل Shadow DOM، ويبدأ بالعربية مع اتجاه تلقائي وعزل bidi لكل عنصر، ويعمل بإمكانية وصول افتراضية (زر إيقاف مؤقت، وتقليل الحركة، والإيقاف عند التركيز)، وقابل للإغلاق مع تذكّر الإغلاق. يتوفر في الأوضاع الثابتة والمتراكبة والعادية، مع متغير ارتفاع اختياري للرؤوس اللاصقة. يعرض النص العادي فقط مع روابط آمنة، وبلا أي تبعيات وبحجم حوالي 4 KB، وبالواجهة نفسها من npm أو وسم `<script>` عبر CDN أو Shopify أو WordPress أو React أو Vue.
+
+| المكتبة | ما هي | الحجم (gzip) | Shadow DOM | RTL | الإيقاف والحركة | الإغلاق والتذكّر | الأنسب لـ |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| **text-strip** | شريط إعلانات | 4.0 KB | نعم | `dir: 'auto'` مع عزل bidi لكل عنصر | زر إيقاف مؤقت، وإيقاف عند المرور والتركيز، وتقليل الحركة | نعم | أشرطة إعلانات تبدأ بالعربية ولا تتدخل في تنسيقات CSS لديك |
+| [marquee-content](https://www.npmjs.com/package/marquee-content) | مكوّن ويب للحركة المتصلة | 6.2 KB | نعم | سمة `direction` (rtl أو ltr) | إيقاف عند المرور (اختياري)، والتركيز، وخروج العنصر من منطقة العرض، وتقليل الحركة | لا | حركات متصلة عامة تُنسَّق بمتغيرات CSS |
+| [@magic-spells/scrolling-content](https://www.npmjs.com/package/@magic-spells/scrolling-content) | مكوّن ويب لتمرير لا نهائي | 3.6 KB (الملف يذكر حوالي 2.5 kB) | لا | غير موثّق | إيقاف عند المرور، والسحب للتقليب، وتقليل الحركة | لا | جدران الشعارات والأشرطة التي تحتاج تفاعلاً بالسحب |
+| [infinite-text-scroller](https://www.npmjs.com/package/infinite-text-scroller) | مكتبة تمرير نصوص | 9.4 KB | لا | نعم | إيقاف وفق WCAG 2.2.2 عند المرور والتركيز، وتبديل بمفتاح المسافة | لا | أشرطة جاهزة الإعدادات (أخبار، عملات، أسهم، تلاشي الإعلانات) |
+| [AcmeTicker](https://www.npmjs.com/package/acmeticker) | مكتبة شريط أخبار | 5.0 KB | لا | قلب تلقائي للاتجاه إلى RTL | أزرار إيقاف، وعدة محركات (عمودي، أفقي، حركة متصلة، كتابة آلية) | لا | أشرطة الأخبار الكلاسيكية التي تحتاج أنماط حركة متعددة |
+| [@zachleat/announcement-banner](https://www.npmjs.com/package/@zachleat/announcement-banner) | مكوّن ويب لشريط ثابت قابل للإغلاق | 0.4 KB | لا | غير منطبق | بلا حركة | نعم (localStorage) | شريط بسيط بلا تمرير ودون تحريك للصفحة |
+
+### أيها تختار
+
+- اختر text-strip لشريط إعلانات متحرك يبدأ بالعربية أو يمزج العربية بالإنجليزية، ويبقى معزولاً عن تنسيقاتك، ويكون سهل الوصول من البداية.
+- للحركة المتصلة العامة (شعارات أو محتوى غني)، فإن [marquee-content](https://www.npmjs.com/package/marquee-content) و[@magic-spells/scrolling-content](https://www.npmjs.com/package/@magic-spells/scrolling-content) خياران قويان بنطاق أضيق.
+- لشريط ثابت قابل للإغلاق بلا تمرير، فإن [@zachleat/announcement-banner](https://www.npmjs.com/package/@zachleat/announcement-banner) صغير ومجرَّب ولا يغيّر تخطيط الصفحة.
+
+**ملاحظة عن المحتوى:** معظم مكوّنات الحركة المتصلة تعرض الـ markup الذي تكتبه، وهذا مرن، لكنه يترك تنقية المحتوى لك. أما text-strip فيعرض نصاً عادياً فقط، وروابط العناصر تقبل عناوين `http` و`https` و`mailto` و`tel` فقط.
+
+*تمت مراجعة المقارنة في 2026-10-10 مقابل آخر إصدار منشور لكل حزمة على npm. الأحجام هي gzip -9 للحزمة الرئيسية في المتصفح لكل مكتبة. المشاريع تتغير، فراجع صفحاتها للاطلاع على أحدث المعلومات.*
+
 ## الحدود المعروفة
 
 - في صف `flex`، أعطِ الهدف الذي يُوضع فيه الشريط عرضاً (مثلاً `flex: 1`)، لأن الشريط لا يملك عرضاً ذاتياً.
@@ -215,6 +239,8 @@ createTextStrip({
 ## المؤلف والتواصل
 
 من إعداد وصيانة **Mohamed ElHawary** (محمد الهواري). للاستفسارات أو التعاون أو التوظيف، يمكنك التواصل عبر [LinkedIn](https://www.linkedin.com/in/mohawary). تُرفع الأخطاء وطلبات الميزات الجديدة إلى [GitHub issues](https://github.com/mo-hawary/text-strip/issues)، أما تقارير الثغرات الأمنية فتُرسل وفق [SECURITY.md](SECURITY.md).
+
+صفحة المشروع الرئيسية: [mohawary.com/open-source/text-strip](https://mohawary.com/open-source/text-strip).
 
 ## هيكل المشروع
 
@@ -251,7 +277,7 @@ createTextStrip({
 ---
 
 <p align="center">
-  Built by <a href="https://mohawary.com"><strong>Mohamed ElHawary</strong></a>
+  Built by <a href="https://mohawary.com"><strong>Mohamed ElHawary</strong></a> &nbsp;·&nbsp; <a href="https://mohawary.com/open-source/text-strip"><strong>صفحة text-strip</strong></a>
 </p>
 
 <p align="center">
