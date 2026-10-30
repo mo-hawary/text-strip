@@ -73,8 +73,8 @@
   "devDependencies": {
     "@playwright/test": "^1.64.0",
     "@types/node": "^26.6.4",
-    "happy-dom": "^20.14.6",
-    "tsup": "^8.5.1",
+    "happy-dom": "^21.0.4",
+    "tsup": "^9.0.0",
     "typescript": "^5.9.3",
     "vite": "^8.3.4",
     "vitest": "^5.0.3"
